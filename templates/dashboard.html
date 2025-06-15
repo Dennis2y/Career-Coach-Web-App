@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Dashboard - Career Coach</title>
+</head>
+<body>
+    <h1>Welcome {{ current_user.username }}!</h1>
+    <p>This is your dashboard.</p>
+
+    <ul>
+        <li><a href="#">Upload Resume</a></li>
+        <li><a href="#">Create Resume with AI</a></li>
+        <li><a href="#">Career Advice</a></li>
+    </ul>
+
+    <a href="{{ url_for('main.logout') }}">Logout</a>
+</body>
+</html>

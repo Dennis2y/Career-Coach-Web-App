@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Career Coach{% endblock %}
+
+{% block content %}
+  <div class="max-w-4xl mx-auto py-10 px-6">
+    <h1 class="text-3xl font-bold text-center text-orange-400 mb-6">Welcome to Your Dashboard</h1>
+    
+    <!-- Display user-related information here -->
+    <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+      <p class="text-white">Welcome, {{ current_user.name }}!</p>
+      <p class="text-gray-400">You can manage your resumes, view career advice, and much more.</p>
+    </div>
+
+    <!-- Resume and Career Sections -->
+    <div class="mt-8 text-center">
+      <a href="/upload" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-6 rounded-lg font-semibold">
+        Upload a Resume
+      </a>
+      <a href="/resume/new" class="bg-orange-500 hover:bg-orange-600 text-white py-2 px-6 rounded-lg font-semibold mt-4 inline-block">
+        Generate a Resume
+      </a>
+    </div>
+
+    <!-- Footer for navigation -->
+    <div class="mt-8 text-center">
+      <a href="/" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-6 rounded-lg font-semibold">
+        Back to Homepage
+      </a>
+    </div>
+  </div>
+{% endblock %}

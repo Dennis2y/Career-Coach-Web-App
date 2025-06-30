@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Too Many Requests{% endblock %}
+{% block content %}
+<div class="text-center py-20">
+  <h1 class="text-6xl font-extrabold text-yellow-400">429</h1>
+  <p class="text-lg text-gray-400 mt-4">You've hit the limit. Please slow down and try again later.</p>
+  <a href="/" class="mt-6 inline-block bg-yellow-400 text-black px-6 py-3 rounded-lg font-bold hover:bg-yellow-500">Return Home</a>
+</div>
+{% endblock %}

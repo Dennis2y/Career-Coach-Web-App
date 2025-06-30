@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}Register - Career Coach{% endblock %}
+
+{% block content %}
+  <h2 class="text-3xl font-bold mb-6">Create Your Account</h2>
+  <form method="POST" action="/register" class="bg-gray-800 p-8 rounded-xl shadow space-y-6">
+    <!-- Username -->
+    <div>
+      <label class="block text-sm text-gray-300 mb-1">Username</label>
+      <input name="username" required class="w-full px-4 py-2 rounded-lg bg-gray-700 text-white border border-gray-600" />
+    </div>
+
+    <!-- Email -->
+    <div>
+      <label class="block text-sm text-gray-300 mb-1">Email</label>
+      <input name="email" type="email" required class="w-full px-4 py-2 rounded-lg bg-gray-700 text-white border border-gray-600" />
+    </div>
+
+    <!-- Password -->
+    <div class="relative">
+      <label class="block text-sm text-gray-300 mb-1">Password</label>
+      <input id="password" name="password" type="password" required class="w-full px-4 py-2 rounded-lg bg-gray-700 text-white border border-gray-600" />
+    </div>
+
+    <!-- Confirm Password (with eye icon) -->
+    <div class="relative">
+      <label class="block text-sm text-gray-300 mb-1">Confirm Password</label>
+      <input id="confirm-password" name="confirm_password" type="password" required class="w-full px-4 py-2 rounded-lg bg-gray-700 text-white border border-gray-600" />
+      <span id="toggle-passwords" class="eye-icon" style="cursor: pointer; user-select: none;">👁️</span>
+    </div>
+
+    <!-- Submit Button -->
+    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg w-full">
+      Register
+    </button>
+  </form>
+
+  <!-- Back to Homepage Button -->
+  <div class="mt-6 text-center">
+    <a href="/" class="text-blue-500 hover:text-blue-700 font-bold py-2 px-6 rounded-lg">
+      Back to Homepage
+    </a>
+  </div>
+
+  <!-- SCRIPT MUST BE INSIDE CONTENT BLOCK -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const togglePasswords = document.getElementById("toggle-passwords");
+      const passwordField = document.getElementById("password");
+      const confirmPasswordField = document.getElementById("confirm-password");
+
+      if (togglePasswords && passwordField && confirmPasswordField) {
+        togglePasswords.addEventListener("click", function () {
+          const isHidden = passwordField.type === "password";
+          passwordField.type = isHidden ? "text" : "password";
+          confirmPasswordField.type = isHidden ? "text" : "password";
+          togglePasswords.textContent = isHidden ? "🙈" : "👁️";
+        });
+      }
+    });
+  </script>
+{% endblock %}  {# This is the ONLY endblock #}

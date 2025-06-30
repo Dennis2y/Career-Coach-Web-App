@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <title>Career Coach - Home</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white">
+
+  <!-- Navigation Bar -->
+  <nav class="flex items-center justify-between px-8 py-4 bg-gray-800 shadow-md">
+    <div class="flex items-center space-x-3">
+      <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="w-10 h-10">
+      <span class="text-2xl font-bold text-orange-500">CAREER COACH</span>
+    </div>
+    <div class="space-x-6 font-semibold text-white">
+      <a href="/" class="hover:text-orange-400">Home</a>
+      {% if current_user.is_authenticated %}
+        <a href="{{ url_for('logout') }}" class="hover:text-orange-400">Logout</a>
+      {% else %}
+        <a href="/register" class="hover:text-orange-400">Register</a>
+        <a href="/login" class="hover:text-orange-400">Login</a>
+      {% endif %}
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="flex flex-col lg:flex-row items-center justify-between px-8 py-16 max-w-7xl mx-auto">
+    <div class="max-w-2xl space-y-8">
+      <h2 class="text-4xl md:text-5xl font-extrabold leading-tight text-white drop-shadow">
+        For the <span class="text-orange-500">Future</span> of Your <span class="text-blue-500">Career</span>
+      </h2>
+      <p class="text-gray-300 text-lg">
+        Unlock your potential with AI-powered tools for resumes, cover letters, and career growth. Everything you need to stand out and succeed, all in one place.
+      </p>
+      <div class="grid grid-cols-2 gap-4 max-w-lg">
+        <a href="/upload" class="bg-orange-500 hover:bg-orange-600 px-6 py-3 rounded-lg font-bold text-black shadow text-center">Upload Resume</a>
+        <a href="/cover-letter" class="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-lg font-bold text-white shadow text-center">Generate Cover Letter</a>
+        <a href="/resumes" class="bg-gray-700 hover:bg-gray-600 px-6 py-3 rounded-lg font-bold text-white shadow text-center">My Resumes</a>
+        <a href="/career-advice" class="bg-yellow-400 hover:bg-yellow-500 px-6 py-3 rounded-lg font-bold text-black shadow text-center">Career Advice</a>
+      </div>
+    </div>
+    <div class="mt-10 lg:mt-0">
+      <img src="{{ url_for('static', filename='images/robot.png') }}" alt="Career Coach Robot" class="w-[340px] md:w-[380px] drop-shadow-lg">
+    </div>
+  </section>
+
+  <!-- Feature Section (Cards) - All Main Features in One Row -->
+<section class="bg-gray-800 px-8 py-12">
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
+    <div class="bg-gray-900 p-6 rounded-xl shadow text-blue-400">
+      <h3 class="text-xl font-bold mb-2">Analyze & Improve Resumes</h3>
+      <p class="text-gray-200 mb-4">Get actionable feedback and suggestions to help your resume stand out to employers.</p>
+      <a href="/upload" class="inline-block mt-2 text-blue-300 hover:underline font-semibold">Upload Resume</a>
+    </div>
+    <div class="bg-gray-900 p-6 rounded-xl shadow text-pink-400">
+      <h3 class="text-xl font-bold mb-2">AI Cover Letter</h3>
+      <p class="text-gray-200 mb-4">Let AI craft a personalized, professional cover letter tailored to your next job application.</p>
+      <a href="/cover-letter" class="inline-block mt-2 text-pink-300 hover:underline font-semibold">Generate Cover Letter</a>
+    </div>
+    <div class="bg-gray-900 p-6 rounded-xl shadow text-orange-400">
+      <h3 class="text-xl font-bold mb-2">Resume History</h3>
+      <p class="text-gray-200 mb-4">Access and download previous versions of your resumes for future editing or sharing.</p>
+      <a href="/resumes" class="inline-block mt-2 text-orange-300 hover:underline font-semibold">View Resumes</a>
+    </div>
+    <div class="bg-gray-900 p-6 rounded-xl shadow text-purple-400">
+      <h3 class="text-xl font-bold mb-2">Career & Job Advice</h3>
+      <p class="text-gray-200 mb-4">Ask AI for career tips, job suggestions, interview prep, and more—instantly.</p>
+      <a href="/career-advice" class="inline-block mt-2 text-purple-300 hover:underline font-semibold">Get Advice</a>
+    </div>
+  </div>
+</section>
+
+  <!-- Footer Section -->
+  <footer class="bg-gray-800 text-white py-6 mt-12">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+        <!-- Career Coaching Section -->
+        <div>
+          <h4 class="font-semibold text-lg mb-3">Career Coaching</h4>
+          <ul>
+            <li><a href="/career-advice" class="hover:text-orange-500">Career Advice</a></li>
+            <li><a href="/cover-letter" class="hover:text-orange-500">Generate Cover Letter</a></li>
+            <li><a href="/upload" class="hover:text-orange-500">Upload Resume</a></li>
+            <li><a href="/resumes" class="hover:text-orange-500">My Resumes</a></li>
+          </ul>
+        </div>
+        <!-- About Section -->
+        <div>
+          <h4 class="font-semibold text-lg mb-3">About Career Coach</h4>
+          <p class="text-sm text-gray-300">Career Coach provides AI-powered tools to improve resumes, generate new ones, and offer personalized career advice to help you grow and advance in your career.</p>
+        </div>
+        <!-- Get In Touch Section -->
+        <div>
+          <h4 class="font-semibold text-lg mb-3">Get In Touch</h4>
+          <ul>
+            <li><a href="/contact" class="hover:text-orange-500">Contact Us</a></li>
+            <li><a href="/privacy-policy" class="hover:text-orange-500">Privacy Policy</a></li>
+            <li><a href="/terms" class="hover:text-orange-500">Terms & Conditions</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="text-center mt-8 text-gray-400 text-sm">
+        &copy; {{ current_year }} Career Coach. All rights reserved.
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

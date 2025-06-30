@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}Career Coach{% endblock %}</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Custom CSS for your site -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+
+  <style>
+    /* Add custom styling for the eye icon */
+    .eye-icon {
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body class="bg-gray-900 text-white">
+
+  <!-- Navigation Bar -->
+  <nav class="flex items-center justify-between px-8 py-4 bg-gray-800 shadow-md">
+    <div class="flex items-center space-x-3">
+      <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="w-10 h-10">
+      <h1 class="text-2xl font-bold text-orange-500">CAREER COACH</h1>
+    </div>
+    <div class="space-x-6 font-semibold text-white">
+      <a href="/" class="hover:text-orange-400">Home</a>
+      <a href="/upload" class="hover:text-orange-400">Upload Resume</a>
+      <a href="/resume/new" class="hover:text-orange-400">Generate Resume</a>
+      <a href="/career-advice" class="hover:text-orange-400">Career Advice</a>
+      <a href="/resumes" class="hover:text-orange-400">My Resumes</a>
+      {% if current_user.is_authenticated %}
+        <a href="/logout" class="hover:text-orange-400">Logout</a>
+      {% else %}
+        <a href="/register" class="hover:text-orange-400">Register</a>
+        <a href="/login" class="hover:text-orange-400">Login</a>
+      {% endif %}
+    </div>
+  </nav>
+
+  <main class="px-6 py-10 max-w-5xl mx-auto">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer Section - Only on homepage -->
+  {% if request.path == '/' %}
+    <footer class="bg-gray-800 text-white py-6">
+      <div class="max-w-7xl mx-auto px-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+          <div>
+            <h4 class="font-semibold text-lg mb-3">Links</h4>
+            <ul>
+              <li><a href="/contact" class="hover:text-orange-500">Contact Us</a></li>
+              <li><a href="/legal" class="hover:text-orange-500">Legal</a></li>
+              <li><a href="/privacy" class="hover:text-orange-500">Privacy Policy</a></li>
+              <li><a href="/newsletter" class="hover:text-orange-500">Newsletter</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="font-semibold text-lg mb-3">Our Services</h4>
+            <ul>
+              <li><a href="/resume-review" class="hover:text-orange-500">Resume Review</a></li>
+              <li><a href="/interview-prep" class="hover:text-orange-500">Interview Preparation</a></li>
+              <li><a href="/job-search" class="hover:text-orange-500">Job Search Guidance</a></li>
+              <li><a href="/career-planning" class="hover:text-orange-500">Career Planning</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="font-semibold text-lg mb-3">About Career Coach</h4>
+            <p class="text-sm">
+              Career Coach empowers job seekers and professionals with expert advice, resume tools, and personalized coaching to help you achieve your career goals. Start building your future with us today!
+            </p>
+          </div>
+          <div class="col-span-1 sm:col-span-2 md:col-span-1 lg:col-span-4 text-center mt-6">
+            <p class="text-sm">&copy; 2025 Career Coach. All Rights Reserved.</p>
+          </div>
+        </div>
+      </div>
+    </footer>
+  {% endif %}
+
+</body>
+</html>

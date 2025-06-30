@@ -1,0 +1,384 @@
+{% extends 'base.html' %}
+
+{% block title %}AI Cover Letter Generator - Career Coach{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-900 text-white">
+
+  <!-- Professional Header Section -->
+  <div class="bg-gradient-to-r from-orange-800 via-orange-700 to-red-800 py-20 px-6">
+    <div class="max-w-7xl mx-auto text-center">
+      <div class="inline-flex items-center justify-center w-24 h-24 bg-white rounded-full mb-8 animate-pulse">
+        <svg class="w-12 h-12 text-orange-600" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586l-2 2V6H5v12h14v-2.586l2-2V18a1 1 0 01-1 1H4a1 1 0 01-1-1V4z"/>
+          <path d="M11 6a1 1 0 00-.707.293l-4 4a1 1 0 101.414 1.414L11 8.414V15a1 1 0 102 0V8.414l3.293 3.293a1 1 0 001.414-1.414l-4-4A1 1 0 0013 6h-极速赛车开奖官网
+2z"/>
+        </svg>
+      </div>
+
+      <h1 class="text-6xl md:text-7xl font-bold text-white mb-6 leading-tight">
+        📝 AI Cover Letter
+        <span class="block text-orange-300 mt-2">Generator</span>
+      </h1>
+
+      <p class="text-2极速赛车开奖官网
+xl md:text-3xl text-orange-100 max-w-4xl mx-auto leading-relaxed">
+        Create compelling, personalized cover letters that perfectly match your resume and target job requirements with AI precision.
+      </p>
+    </div>
+  </div>
+
+  <!-- AI Enhancement Promise -->
+  <div class="bg-gray-800 py-16 px-6">
+    <div class="max-w-5xl mx-auto">
+      <div class="bg-blue-900 border border-blue-600 p-10 rounded-3xl text-center shadow-2xl">
+        <div class="flex items-center justify-center mb-6">
+          <svg class="w-10 h-10 text-blue-300 mr-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
+          </svg>
+          <h2 class="text-3xl font-bold text-blue-300">🤖 AI-Powered Cover Letter Creation</h2>
+        </div>
+        <p class="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
+          Our advanced AI analyzes your experience and the job requirements to create a compelling, personalized cover letter that stands out to hiring managers worldwide.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cover Letter Form Section -->
+  <div class="bg-gray-800 py-20 px-6">
+    <div class="max-w-5xl mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="text-5xl font-bold text-white mb-6">Generate Your Professional Cover Letter</h2>
+        <p class="text-xl text-gray-400 max-w-3xl mx-auto">Provide your details below and let AI create a tailored cover letter for your job application</p>
+      </div>
+
+      <!-- Error Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="bg-red-900 border border-red-600 text-red-300 px-8 py-6 rounded-2xl mb-10 text-center shadow-lg">
+              <svg class="w-6 h-6 inline mr-3" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a极速赛车开奖官网
+8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+              </svg>
+              <span class="text-lg font-medium">{{ message }}</span>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <!-- Professional Form -->
+      <form method="POST" class="bg-gray-900 p-12 rounded-3xl shadow-2xl border border-gray-700" onsubmit="showProcessing()">
+
+        <!-- Resume Summary Section -->
+        <div class="mb-10">
+          <label class="block text-2xl font-semibold text-white mb-6 flex items-center">
+            <svg class="w-8 h-8 mr-3 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path>
+            </svg>
+            Your Resume Summary
+          </label>
+          <textarea
+            name="resume_text"
+            rows="7"
+            required
+            class="w-full px-8 py-6 rounded-2xl bg-gray-700 text-white border-2 border-gray-600 focus:border-orange-500 focus:ring-4 focus:ring-orange-500 focus:ring-opacity-30 transition-all duration-300 text-lg leading-relaxed"
+            placeholder="Paste your resume content, key skills, and work experience here. Include your most relevant qualifications and achievements that demonstrate your value to employers..."
+          ></textarea>
+          <p class="text-sm text-gray-400 mt-3 flex items-center">
+            <svg class="w-4 h-4 mr-2 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 极速赛车开奖官网
+0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+            </svg>
+            💡 Tip: Include your most relevant skills, experience, and quantifiable achievements
+          </p>
+        </div>
+
+        <!-- Job Information Section -->
+        <div class="mb-12">
+          <label class="block text-2xl font-semibold text-white mb-6 flex items-center">
+            <svg class="w-8 h-8 mr-3 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clip-rule="evenodd"></path>
+            </svg>
+            Job Information
+          </label>
+          <textarea
+            name="job_info"
+            rows="6"
+            required
+            class="w-full px-8 py-6 rounded-2xl bg-gray-700 text-white border-2 border-gray-600 focus:border-green-500 focus:ring-4 focus:ring-green-500 focus:ring-opacity-30 transition-all duration-300 text-lg leading-relaxed"
+            placeholder="Enter the job title, company name, key requirements, and any specific qualifications mentioned in the job posting. Include details about the company culture, values, and what they're looking for in an ideal candidate..."
+          ></textarea>
+          <p class="text-sm text-gray-400 mt-3 flex items-center">
+            <svg class="w-4 h-4 mr-2 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+            </svg>
+            💡 Tip: Include job title, company name, and key requirements from the job posting
+          </p>
+        </div>
+
+        <!-- Generate Button -->
+        <div class="text-center">
+          <button type="submit" class="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-6 px-16 rounded-3xl text-2xl transition-all duration-300 transform hover:scale-105 shadow-2xl">
+            <svg class="w-8 h-8 inline mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+            </svg>
+            <span id="generate-text">🚀 Generate Professional Cover Letter</span>
+            <span id="processing-text" class="hidden">⏳ AI is crafting your cover letter...</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Generated Cover Letter Display -->
+  {% if letter %}
+  <div class="bg-gray-800 py-20 px-6">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="text-5xl font-bold text-green-400 mb-6">✅ Your Professional Cover Letter</h2>
+        <p class="text-2xl text-gray-400">AI-generated and tailored to your specific job application</p>
+      </div>
+
+      <!-- Cover Letter Container -->
+      <div class="bg-white rounded-3xl shadow-2xl overflow-hidden">
+        <!-- Document Header -->
+        <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-10 py-8 border-b border-gray-200">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+              <div class="w-5 h-5 bg-red-500 rounded-full"></div>
+              <div class="w-5 h-5 bg-yellow-500 rounded-full"></div>
+              <div class="w-5 h-5 bg-green-500 rounded-full"></极速赛车开奖官网
+div>
+            </div>
+            <div class="flex items-center space-x-4">
+              <span class="text-lg text-gray-600 font-medium">Professional Cover Letter</span>
+              <div class="flex items-center space-x-2">
+                <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                <span class="text-sm text-green-600 font-semibold">READY</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cover Letter Content with AI Typing -->
+        <div class="p-16 bg-white text-gray-900">
+          <div class="max-w-4xl mx-auto">
+            <div class="prose prose-xl max-w-none">
+              <div id="ai-typing-container" class="whitespace-pre-wrap font-serif text-xl leading-relaxed text-gray-800 min-h-[400px]"></div>
+              <span id="ai-typing-cursor" class="text-green-500 animate-pulse text-2xl font-bold">|</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mt-16">
+        <button onclick="copyToClipboard()" class="group bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-8 px-10 rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-xl">
+          <div class="flex flex-col items-center">
+            <svg class="w-16 h-16 mb-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
+            </svg>
+            <span class="text-xl font-bold">Copy Text</span>
+            <span class="text-base opacity-75">Copy to clipboard</span>
+          </div>
+        </button>
+
+        <button onclick="downloadCoverLetter()" class="group bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-8 px-10 rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-xl">
+          <div class="flex flex-col items-center">
+            <svg class="w-16 h-16 mb-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <span class="text-xl font-bold">Download PDF</span>
+            <span class="text-base opacity-75">Save as PDF file</span>
+          </div>
+        </button>
+
+        <button onclick="generateAnother()" class="group bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-semibold py-8 px-10 rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-xl">
+          <div class="flex flex-col items-center">
+            <svg class="w-16 h-16 mb-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            <span class="text-xl font-bold">Generate Another</span>
+            <span class="text-base opacity-75">Create new version</span>
+          </div>
+        </button>
+
+        <a href="{{ url_for('home') }}" class="group bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 text-white font-semibold py-8 px-10 rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-xl">
+          <div class="flex flex-col items-center">
+            <svg class="w-16 h-16 mb-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+            </svg>
+            <span class="text-xl font-bold">Home</span>
+            <span class="text-base opacity-75">Back to dashboard</span>
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Processing Overlay -->
+  <div id="processing-overlay" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+    <div class="bg-gray-800 p-12 rounded-3xl text-center max-w-md mx-4 shadow-2xl">
+      <div class="flex justify-center mb-6">
+        <svg class="animate-spin h-16 w-16 text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+      </div>
+      <h3 class="text-2xl font-bold text-orange-400 mb-4">AI is Creating Your Cover Letter</h3>
+      <p class="text-gray-300 text-lg">Please wait while we analyze and craft your personalized cover letter...</p>
+      <p class="text-gray-400 text-base mt-4">This typically takes 10-20 seconds</p>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Cover Letter Tips Section -->
+  <div class="bg-gray-900 py-20 px-6">
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="text-5xl font-bold text-white mb-6">💡 Cover Letter Best Practices</h2>
+        <p class="text-xl text-gray-400">Tips to make your cover letter stand out to hiring managers worldwide</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+        <div class="bg-gray-800 rounded-3xl p-10 border border-gray-700 hover:border-blue-500 transition-all duration-300 transform hover:scale-105">
+          <div class="text-center mb-8">
+            <div class="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-white">Customize for Each Job</h3>
+          </div>
+          <p class="text-gray-300 text-center text-lg leading-relaxed">Tailor your cover letter to match the specific job requirements and company culture for maximum impact.</p>
+        </div>
+
+        <div class="bg-gray-800 rounded-3xl p-10 border border-gray-700 hover:border-green-500 transition-all duration-300 transform hover:scale-105">
+          <div class="text-center mb-8">
+            <div class="w-20 h-20 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1极速赛车开奖官网
+h12a1 1 极速赛车开奖官网
+0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"></path>
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-white">Show Specific Examples</h3>
+          </div>
+          <p class="text-gray-300 text-center text-lg leading-relaxed">Include quantifiable achievements and specific examples that demonstrate your value to potential employers.</p>
+        </div>
+
+        <div class="bg-gray-800 rounded-3xl p-10 border border-gray-700 hover:border-purple-500 transition-all duration-300 transform hover:scale-105">
+          <div class="text-center mb-8">
+            <div class="w-20 h-20 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"></path>
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-white">Keep It Professional</h3>
+          </div>
+          <p class="text-gray-300 text-center text-lg leading-relaxed">Maintain a professional tone while showing enthusiasm and letting your personality shine through appropriately.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showProcessing() {
+  document.getElementById('generate-text').classList.add('hidden');
+  document.getElementById('processing-text').classList.remove('hidden');
+  document.getElementById('processing-overlay').classList.remove('hidden');
+}
+
+// ChatGPT-like typing animation
+{% if letter %}
+const fullLetter = `{{ letter | replace('\r\n', '\n') | replace('\r', '\n') | e }}`;
+const container = document.getElementById('ai-typing-container');
+const cursor = document.getElementById('ai-typing-cursor');
+let index = 0;
+let isDeleting = false;
+let typingSpeed = 30; // Milliseconds per character (ChatGPT-like speed)
+let deleteSpeed = 15; // Faster deletion speed
+
+// Clear container before starting
+container.textContent = '';
+
+function typeCharacter() {
+  if (index < fullLetter.length) {
+    // Add next character
+    container.textContent += fullLetter.charAt(index);
+    index++;
+    setTimeout(typeCharacter, typingSpeed);
+  } else {
+    // Typing complete - hide cursor after delay
+    setTimeout(() => {
+      cursor.style.display = 'none';
+    }, 500);
+  }
+}
+
+// Start typing after 1 second
+setTimeout(typeCharacter, 1000);
+{% endif %}
+
+function copyToClipboard() {
+  const coverLetterText = document.getElementById('ai-typing-container').textContent;
+  navigator.clipboard.writeText(coverLetterText).then(function() {
+    showNotification('✅ Cover letter copied to clipboard successfully!', 'success');
+  }).catch(function() {
+    showNotification('❌ Failed to copy. Please select and copy manually.', 'error');
+  });
+}
+
+function downloadCoverLetter() {
+  const coverLetterText = document.getElementById('ai-typing-container').textContent;
+  const blob = new Blob([coverLetterText], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const timestamp = new Date().toISOString().slice(0, 10);
+
+  a.href = url;
+  a.download = `Professional_Cover_Letter_${timestamp}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  showNotification('📄 Cover letter downloaded successfully!', 'success');
+}
+
+function generateAnother() {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  document.querySelector('textarea[name="resume_text"]').focus();
+}
+
+function showNotification(message, type) {
+  const notification = document.createElement('div');
+  const bgColor = type === 'success' ? 'bg-green-600' : 'bg-red-600';
+
+  notification.className = `fixed top-8 right-8 ${bgColor} text-white px-8 py-6 rounded-2xl shadow-2xl z-50 transform transition-all duration-300 translate-x-full`;
+  notification.innerHTML = `
+    <div class="flex items-center">
+      <span class="text-xl font-medium">${message}</span>
+    </div>
+  `;
+
+  document.body.appendChild(notification);
+
+  setTimeout(() => {
+    notification.style.transform = 'translateX(0)';
+  }, 100);
+
+  setTimeout(() => {
+    notification.style.transform = 'translateX(100%)';
+    setTimeout(() => {
+      if (document.body.contains(notification)) {
+        document.body.removeChild(notification);
+      }
+    }, 300);
+  }, 4000);
+}
+</script>
+{% endblock %}

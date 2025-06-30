@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+
+{% block title %}Career Advice - Career Coach{% endblock %}
+
+{% block content %}
+  <!-- Main content area -->
+  <div class="max-w-4xl mx-auto py-10 pb-40 content-area flex flex-col min极h-[80vh]">
+    <h2 class="text-3xl font-bold text-center text-orange-400 mb-6">AI Career Advice</h2>
+    <p class="text-center text-gray-400 mb-8 text-lg">Ask a career-related question below, and get AI-powered suggestions!</p>
+
+    {% if advice %}
+      <!-- AI Response Box with live typing -->
+      <div id="advice-output" class="bg-gray-800 p-8 rounded-lg shadow-lg text-white mb-8 w-full max-w-4xl mx-auto leading-relaxed text-[22px] font-medium" style="font-family: 'Inter', Arial, sans-serif;">
+        <p class="mb-4 text-xl"><strong>Your Question:</strong> {{ request.form['question'] }}</p>
+        <h3 class="font-semibold text-orange-300 mb-4 text-2xl">AI Career Advice:</h3>
+        <div id="ai-typing" style="white-space: pre-line;"></div>
+      </div>
+      <script>
+        // Ultra-fast typing at ~50 characters per second
+        document.addEventListener("DOMContentLoaded", function () {
+          const advice = {{ advice|tojson }};
+          const target = document.getElementById("ai-typing");
+          let idx = 0;
+
+          // Speed parameters (500 chars in 10 seconds = 50 CPS)
+          const baseDelay = 20; // 50 characters per second (1000ms/50 = 20ms per char)
+          const initialDelay = 300; // Short initial delay
+
+          function typeWriter() {
+            if (idx < advice.length) {
+              target.innerHTML = advice.substring(0, idx) + '<span id="cursor" class="animate-pulse text-orange-300">|</span>';
+              idx++;
+
+              // Calculate delay - faster for normal characters
+              let delay = baseDelay;
+
+              // Slightly longer pauses for line breaks
+              if (advice.charAt(idx-1) === '\n') {
+                delay = 40;
+              }
+              // Slightly longer for punctuation
+              else if (/[,.!?;:]/.test(advice.charAt(idx-1))) {
+                delay = 30;
+              }
+
+              setTimeout(typeWriter, delay);
+            } else {
+              // Remove cursor when done
+              const cursor = document.getElementById("cursor");
+              if (cursor) cursor.remove();
+            }
+          }
+
+          setTimeout(typeWriter, initialDelay);
+        });
+      </script>
+    {% endif %}
+  </div>
+
+  <!-- Fixed bottom input area -->
+  <div class="fixed bottom-0 left-0 right-0 z-50 bg-[#212121] border-t border-[#333333] py-4">
+    <div class="max-w-4xl mx-auto px-4 w-full">
+      <form method="POST" action="/career-advice" enctype="multipart/form-data"
+            class="relative w-full bg-[#2f2f2f] rounded-3xl border border-[#424242] shadow-lg">
+        <div class="flex items-end p-2 gap-2 w-full">
+
+          <!-- Attach Files Button -->
+          <label for="attachment" class="flex-shrink-0 p-2 hover:bg-[#404040] rounded-xl cursor-pointer transition-colors" title="Attach files">
+            <svg class="w-7 h-7 text-[#a6a6a6]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            <input type="file" name="attachment" id="attachment" class="hidden"
+                   accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.zip">
+          </label>
+
+          <!-- Big, wide, tall textarea -->
+          <textarea
+            name="question"
+            id="question"
+            class="flex-1 w-full h-[100px] min-h-[100px] max-h-[220px] bg-transparent text-white placeholder-[#a6a6a6] border-none outline-none resize-y overflow-y-auto py-4 px-5 text-[22px] leading-10 rounded-xl font-medium"
+            placeholder="Ask anything"
+            required
+            rows="4"
+            oninput="checkInput(this)"
+            onkeydown="handleKeyPress(event)"
+            aria-label="Ask your question"
+            maxlength="4000"
+            style="box-sizing: border-box;"
+          ></textarea>
+
+          <!-- Voice Input Button -->
+          <button type="button" onclick="startVoiceInput(event)"
+                  class="flex-shrink-0 p-2 hover:bg-[#404040] rounded-xl transition-colors" title="Voice input" aria-label="Voice input">
+            <svg class="w-7 h-7 text-[极a6a6a6]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+            </svg>
+          </button>
+
+          <!-- Send Button -->
+          <button type="submit"
+                  class="flex-shrink-0 p-2 bg-white text-black rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50"
+                  id="send-btn" disabled title="Send message" aria-label="Send message">
+            <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+            </svg>
+          </button>
+
+        </div>
+      </form>
+
+      <p class="text-center text-xs text-[#a6a6a6] mt-2">
+        Career Coach can make mistakes. Check important info.
+      </p>
+    </div>
+  </div>
+
+  <!-- JavaScript for send button and voice input -->
+  <script>
+    // Enable/disable send button based on content
+    function checkInput(element) {
+      const sendBtn = document.getElementById('send-btn');
+      sendBtn.disabled = !element.value.trim();
+    }
+
+    // Handle Enter key to submit (Shift+Enter for new line)
+    function handleKeyPress(event) {
+      if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        const form = event.target.closest('form');
+        const sendBtn = document.getElementById('send-btn');
+        if (!sendBtn.disabled) {
+          form.submit();
+        }
+      }
+    }
+
+    // Voice input functionality
+    function startVoiceInput(event) {
+      event.preventDefault();
+      const textarea = document.getElementById('question');
+
+      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        alert('Voice input not supported in this browser.');
+        return;
+      }
+
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognition = new SpeechRecognition();
+
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript;
+        textarea.value += (textarea.value ? ' ' : '') + transcript;
+        checkInput(textarea);
+        textarea.focus();
+      };
+
+      recognition.onerror = function(event) {
+        console.error('Speech recognition error:', event.error);
+      };
+
+      recognition.start();
+    }
+
+    // Initialize on page load
+    document.addEventListener("DOMContentLoaded", function() {
+      const textarea = document.getElementById('question');
+      if (textarea) {
+        checkInput(textarea);
+        textarea.focus();
+      }
+    });
+  </script>
+{% endblock %}

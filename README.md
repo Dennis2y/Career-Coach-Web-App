@@ -115,9 +115,7 @@ Career-Coach-Web-App
 - **SQLAlchemy**
 - **OpenAI API**
 - **Tailwind CSS**
-- **JavaScript**
 
----
 
 ## Contributing
 

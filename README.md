@@ -107,8 +107,6 @@ Career-Coach-Web-App
 └── README.md 
 
 
----
-
 ## Technologies
 
 - **Python 3.10+**

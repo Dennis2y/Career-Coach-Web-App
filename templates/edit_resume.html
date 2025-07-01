@@ -1,0 +1,38 @@
+<!-- templates/edit_resume.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Edit Resume</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+</head>
+<body>
+    <h1>Edit Resume</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flashes">
+          {% for category, message in messages %}
+            <li class="{{ category }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('edit_resume', id=resume.id) }}">
+        <div>
+            <label for="text_content">Resume Content:</label><br />
+            <textarea id="text_content" name="text_content" rows="20" cols="80" required>{{ resume.text_content }}</textarea>
+        </div>
+
+        <div>
+            <label for="template_name">Template Name (optional):</label><br />
+            <input type="text" id="template_name" name="template_name" value="{{ resume.template_name or '' }}" />
+        </div>
+
+        <button type="submit">Save Changes</button>
+        <a href="{{ url_for('view_resume_endpoint', id=resume.id) }}">Cancel</a>
+    </form>
+</body>
+</html>

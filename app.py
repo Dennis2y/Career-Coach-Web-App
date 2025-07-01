@@ -1,50 +1,51 @@
-from flask import Flask, render_template, request, redirect, url_for, session, abort
-from flask_sqlalchemy import SQLAlchemy
+from flask import Flask, render_template, request, redirect, url_for, session, abort, flash
 from flask_migrate import Migrate
+from flask_login import LoginManager, login_required, login_user, current_user, logout_user
+from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from datetime import datetime
-from flask import flash
+from dotenv import load_dotenv
 import os
 import openai
-from flask_login import login_required, login_user, current_user, logout_user
-from werkzeug.security import generate_password_hash, check_password_hash
-from dotenv import load_dotenv
-from flask_login import LoginManager, UserMixin
-from models import db, User, Resume, ResumeInput, UsageLog
 import docx
 from PyPDF2 import PdfReader
 from striprtf.striprtf import rtf_to_text
-from werkzeug.utils import secure_filename
-
-
-# Initialize the Flask application
-app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://dennischarles:Camastra12%40@localhost/career_coach'
-app.config['UPLOAD_FOLDER'] = 'uploads'
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
-app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5MB limit
-
-if not os.path.exists(app.config['UPLOAD_FOLDER']):
-    os.makedirs(app.config['UPLOAD_FOLDER'])
-
-# Initialize database and migration manager
-db.init_app(app)
-migrate = Migrate(app, db)
 
 # Load environment variables
 load_dotenv()
 
+# Initialize Flask app
+app = Flask(__name__)
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL").strip("'").strip('"')
+app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5MB limit
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Create uploads folder if it doesn't exist
+if not os.path.exists(app.config['UPLOAD_FOLDER']):
+    os.makedirs(app.config['UPLOAD_FOLDER'])
+
+# Initialize extensions
+from models import db
+db.init_app(app)
+migrate = Migrate(app, db)
+
+# Initialize LoginManager (SINGLE initialization)
+login_manager = LoginManager(app)
+login_manager.login_view = 'login'
+
 # Set OpenAI API key
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# Flask-Login setup
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = 'login'
+# Import models after db initialization
+from models import User, Resume, ResumeInput, UsageLog, CoverLetter
 
+# User loader function (SINGLE implementation)
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return db.session.get(User, int(user_id))
+
 
 @app.route("/")
 def home():
@@ -61,6 +62,7 @@ def admin_dashboard():
 @login_required
 def dashboard():
     return render_template("dashboard.html")
+
 
 ALLOWED_EXTENSIONS = {'pdf', 'docx', 'txt', 'rtf'}
 
@@ -180,10 +182,6 @@ def allowed_photo(filename):
         filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg'}
 
 
-@app.route("/resume/<int:id>")
-def view_resume(id):
-    resume = Resume.query.get_or_404(id)
-    return render_template("resume_view.html", resume=resume)
 
 @app.route("/resumes")
 @login_required
@@ -191,9 +189,9 @@ def resume_list():
     resumes = Resume.query.filter_by(user_id=current_user.id).order_by(Resume.created_at.desc()).all()
     return render_template("resumes_list.html", resumes=resumes)
 
-@app.route("/resume/new")
-def new_resume_form():
-    return render_template("generate_resume.html")
+#@app.route("/resume/new")
+#def new_resume_form():
+    #return render_template("generate_resume.html")
 
 
 def generate_professional_resume(original_content):
@@ -300,6 +298,36 @@ def view_resume(id):
     if resume.user_id != current_user.id:
         abort(403)
     return render_template("resume_view.html", resume=resume)
+
+
+
+
+# Update Resume - edit resume text or metadata
+@app.route("/resume/<int:id>/edit", methods=["GET", "POST"])
+@login_required
+def edit_resume(id):
+    resume = Resume.query.get_or_404(id)
+    if resume.user_id != current_user.id:
+        abort(403)
+
+    if request.method == "POST":
+        new_text = request.form.get("text_content", "").strip()
+        new_template = request.form.get("template_name", "").strip()
+
+        if not new_text:
+            flash("Resume content cannot be empty", "error")
+            return render_template("edit_resume.html", resume=resume)
+
+        resume.text_content = new_text
+        if new_template:
+            resume.template_name = new_template
+
+        db.session.commit()
+        flash("Resume updated successfully", "success")
+        return redirect(url_for('view_resume_endpoint', id=resume.id))
+
+    return render_template("edit_resume.html", resume=resume)
+
 
 # Registration part for the user
 @app.route("/register", methods=["GET", "POST"])
@@ -467,4 +495,6 @@ def too_many_requests(e):
     return render_template("429.html"), 429
 
 if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
     app.run(debug=True, port=5001)

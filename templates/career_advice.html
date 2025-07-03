@@ -3,54 +3,36 @@
 {% block title %}Career Advice - Career Coach{% endblock %}
 
 {% block content %}
-  <!-- Main content area -->
   <div class="max-w-4xl mx-auto py-10 pb-40 content-area flex flex-col min极h-[80vh]">
     <h2 class="text-3xl font-bold text-center text-orange-400 mb-6">AI Career Advice</h2>
     <p class="text-center text-gray-400 mb-8 text-lg">Ask a career-related question below, and get AI-powered suggestions!</p>
 
     {% if advice %}
-      <!-- AI Response Box with live typing -->
       <div id="advice-output" class="bg-gray-800 p-8 rounded-lg shadow-lg text-white mb-8 w-full max-w-4xl mx-auto leading-relaxed text-[22px] font-medium" style="font-family: 'Inter', Arial, sans-serif;">
         <p class="mb-4 text-xl"><strong>Your Question:</strong> {{ request.form['question'] }}</p>
         <h3 class="font-semibold text-orange-300 mb-4 text-2xl">AI Career Advice:</h3>
         <div id="ai-typing" style="white-space: pre-line;"></div>
       </div>
       <script>
-        // Ultra-fast typing at ~50 characters per second
         document.addEventListener("DOMContentLoaded", function () {
           const advice = {{ advice|tojson }};
           const target = document.getElementById("ai-typing");
           let idx = 0;
-
-          // Speed parameters (500 chars in 10 seconds = 50 CPS)
-          const baseDelay = 20; // 50 characters per second (1000ms/50 = 20ms per char)
-          const initialDelay = 300; // Short initial delay
-
+          const baseDelay = 20;
+          const initialDelay = 300;
           function typeWriter() {
             if (idx < advice.length) {
               target.innerHTML = advice.substring(0, idx) + '<span id="cursor" class="animate-pulse text-orange-300">|</span>';
               idx++;
-
-              // Calculate delay - faster for normal characters
               let delay = baseDelay;
-
-              // Slightly longer pauses for line breaks
-              if (advice.charAt(idx-1) === '\n') {
-                delay = 40;
-              }
-              // Slightly longer for punctuation
-              else if (/[,.!?;:]/.test(advice.charAt(idx-1))) {
-                delay = 30;
-              }
-
+              if (advice.charAt(idx-1) === '\n') delay = 40;
+              else if (/[,.!?;:]/.test(advice.charAt(idx-1))) delay = 30;
               setTimeout(typeWriter, delay);
             } else {
-              // Remove cursor when done
               const cursor = document.getElementById("cursor");
               if (cursor) cursor.remove();
             }
           }
-
           setTimeout(typeWriter, initialDelay);
         });
       </script>
@@ -117,13 +99,10 @@
 
   <!-- JavaScript for send button and voice input -->
   <script>
-    // Enable/disable send button based on content
     function checkInput(element) {
       const sendBtn = document.getElementById('send-btn');
       sendBtn.disabled = !element.value.trim();
     }
-
-    // Handle Enter key to submit (Shift+Enter for new line)
     function handleKeyPress(event) {
       if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault();
@@ -134,39 +113,29 @@
         }
       }
     }
-
-    // Voice input functionality
     function startVoiceInput(event) {
       event.preventDefault();
       const textarea = document.getElementById('question');
-
       if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
         alert('Voice input not supported in this browser.');
         return;
       }
-
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       const recognition = new SpeechRecognition();
-
       recognition.lang = 'en-US';
       recognition.interimResults = false;
       recognition.maxAlternatives = 1;
-
       recognition.onresult = function(event) {
         const transcript = event.results[0][0].transcript;
         textarea.value += (textarea.value ? ' ' : '') + transcript;
         checkInput(textarea);
         textarea.focus();
       };
-
       recognition.onerror = function(event) {
         console.error('Speech recognition error:', event.error);
       };
-
       recognition.start();
     }
-
-    // Initialize on page load
     document.addEventListener("DOMContentLoaded", function() {
       const textarea = document.getElementById('question');
       if (textarea) {

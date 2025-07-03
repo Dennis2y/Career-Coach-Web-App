@@ -167,6 +167,13 @@
     </div>
   </div>
 
+  <!-- Extra PDF Download Buttons (optional grid) -->
+  <div class="template-options grid grid-cols-1 md:grid-cols-3 gap-8 my-8">
+    <button onclick="downloadTemplate('professional', 'color')" class="btn-template">Download Professional PDF</button>
+    <button onclick="downloadTemplate('modern', 'color')" class="btn-template">Download Modern PDF</button>
+    <button onclick="downloadTemplate('creative', 'color')" class="btn-template">Download Creative PDF</button>
+  </div>
+
   <!-- Photo Integration Section -->
   <div class="bg-gray-900 rounded-3xl p-12 border-2 border-orange-600 mb-16">
     <div class="text-center mb-10">
@@ -187,7 +194,9 @@
     </div>
     <div class="bg-white rounded-2xl p-8 text-gray-900 max-h-96 overflow-y-auto">
       <div class="prose prose-lg max-w-none">
-        <div id="enhanced-content" class="whitespace-pre-wrap font-serif leading-relaxed text-lg md:text-xl" style="font-size: 1.25rem; line-height: 2; min-height: 120px;"></div>
+        <div id="enhanced-content" class="whitespace-pre-wrap font-serif leading-relaxed text-lg md:text-xl" style="font-size: 1.25rem; line-height: 2; min-height: 120px;">
+          {{ html_content | safe }}
+        </div>
       </div>
     </div>
   </div>
@@ -199,6 +208,7 @@
       <p class="text-xl text-gray-400 max-w-3xl mx-auto">Professional standards applied to optimize your resume for global opportunities</p>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+      <!-- You can add feature cards here if desired -->
     </div>
   </div>
 
@@ -367,30 +377,26 @@ function showNotification(message, type) {
   }, 4000);
 }
 
+// PDF Download with Template/Color Selection for Enhanced Resume
 function downloadTemplate(templateType, colorOption) {
-  showNotification('🔄 Generating your professional resume... Please wait.', 'info');
-  const resumeData = {
-    content: document.getElementById('enhanced-content').innerText,
-    template: templateType,
-    colorOption: colorOption,
-    includePhoto: {% if resume.photo_path %}true{% else %}false{% endif %},
-    photoPath: '{{ resume.photo_path if resume.photo_path else "" }}',
-    userInfo: {
-      name: "{{ current_user.name }}",
-      email: "{{ current_user.email }}"
-    }
+  const resumeContent = {{ resume_markdown | tojson | safe }};
+  const userInfo = {
+    name: "{{ current_user.name }}",
+    email: "{{ current_user.email }}"
   };
   fetch('/download-template-resume', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(resumeData)
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      template: templateType,
+      colorOption: colorOption,
+      content: resumeContent,
+      isMarkdown: true,
+      userInfo: userInfo
+    })
   })
   .then(response => {
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
-    }
+    if (!response.ok) throw new Error('Network response was not ok');
     return response.blob();
   })
   .then(blob => {
@@ -398,7 +404,7 @@ function downloadTemplate(templateType, colorOption) {
     const a = document.createElement('a');
     a.style.display = 'none';
     a.href = url;
-    a.download = `${templateType}_${colorOption}_Resume_${new Date().toISOString().slice(0, 10)}.pdf`;
+    a.download = `Resume_${templateType}_${colorOption}_${new Date().toISOString().slice(0, 10)}.pdf`;
     document.body.appendChild(a);
     a.click();
     window.URL.revokeObjectURL(url);
@@ -406,9 +412,7 @@ function downloadTemplate(templateType, colorOption) {
     showNotification('📄 Professional resume downloaded successfully!', 'success');
   })
   .catch(error => {
-    console.error('Error:', error);
-    downloadTextFallback(templateType, colorOption);
-    showNotification('📄 Resume downloaded as text. Template service temporarily unavailable.', 'warning');
+    alert('Failed to download PDF. Please try again.');
   });
 }
 

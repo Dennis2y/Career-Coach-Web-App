@@ -159,10 +159,16 @@
         <div class="p-16 bg-white text-gray-900">
           <div class="max-w-4xl mx-auto">
             <div class="prose prose-xl max-w-none">
-              <div id="ai-typing-container" class="whitespace-pre-wrap font-serif text-xl leading-relaxed text-gray-800 min-h-[400px]">
-                {{ letter | safe }}
+              <!-- Typing animation -->
+              <div id="ai-typing-container"
+                   class="whitespace-pre-wrap font-serif leading-relaxed text-2xl md:text-3xl text-gray-800 min-h-[400px]"
+                   style="font-size: 1.5rem; line-height: 2.2;">
               </div>
               <span id="ai-typing-cursor" class="text-green-500 animate-pulse text-2xl font-bold">|</span>
+              <!-- Final formatted HTML, hidden until typing finishes -->
+              <div id="ai-final-html" class="hidden">
+                {{ letter | safe }}
+              </div>
             </div>
           </div>
         </div>
@@ -180,7 +186,17 @@
           </div>
         </button>
 
-        <button onclick="downloadCoverLetter()" class="group bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-8 px-10 rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-xl">
+        <button onclick="downloadCoverLetter()" class="group bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-semibold py-8 px-10 rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-xl">
+          <div class="flex flex-col items-center">
+            <svg class="w-16 h-16 mb-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <span class="text-xl font-bold">Download Markdown</span>
+            <span class="text-base opacity-75">Save as .md file</span>
+          </div>
+        </button>
+
+        <button onclick="downloadTemplatePDF('cover_letter')" class="group bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-8 px-10 rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-xl">
           <div class="flex flex-col items-center">
             <svg class="w-16 h-16 mb-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
@@ -199,16 +215,6 @@
             <span class="text-base opacity-75">Create new version</span>
           </div>
         </button>
-
-        <a href="{{ url_for('home') }}" class="group bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 text-white font-semibold py-8 px-10 rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-xl">
-          <div class="flex flex-col items-center">
-            <svg class="w-16 h-16 mb-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-            </svg>
-            <span class="text-xl font-bold">Home</span>
-            <span class="text-base opacity-75">Back to dashboard</span>
-          </div>
-        </a>
       </div>
     </div>
   </div>
@@ -267,37 +273,62 @@
 function showProcessing() {
   document.getElementById('generate-text').classList.add('hidden');
   document.getElementById('processing-text').classList.remove('hidden');
-  document.getElementById('processing-overlay').classList.remove('hidden');
+  // document.getElementById('processing-overlay').classList.remove('hidden');
 }
 
-//  typing   animation
-{% if letter %}
-const fullLetter = `{{ letter | replace('\r\n', '\n') | replace('\r', '\n') | e }}`;
+// AI Live Typing Animation - Paragraph by Paragraph, Large Text
+{% if letter_markdown %}
+const fullLetter = {{ letter_markdown | default('') | tojson | safe }};
 const container = document.getElementById('ai-typing-container');
 const cursor = document.getElementById('ai-typing-cursor');
-let index = 0;
+const finalHtml = document.getElementById('ai-final-html');
 let typingSpeed = 30;
 
-// Clearing the  container before starting
-container.textContent = '';
-
-function typeCharacter() {
-  if (index < fullLetter.length) {
-    container.textContent += fullLetter.charAt(index);
-    index++;
-    setTimeout(typeCharacter, typingSpeed);
-  } else {
-    setTimeout(() => {
-      cursor.style.display = 'none';
-    }, 500);
-  }
+// Split into paragraphs by double newlines (Markdown paragraphs)
+let paragraphs = fullLetter.split(/\n\s*\n/);
+if (paragraphs.length === 1) {
+  // fallback: split by single newline if no double newlines
+  paragraphs = fullLetter.split('\n');
 }
 
-setTimeout(typeCharacter, 1000);
+container.innerHTML = '';
+let pIndex = 0;
+
+function typeParagraph() {
+  if (pIndex >= paragraphs.length) {
+    setTimeout(() => {
+      cursor.style.display = 'none';
+      container.classList.add('hidden');
+      finalHtml.classList.remove('hidden');
+    }, 500);
+    return;
+  }
+  const p = document.createElement('p');
+  p.className = "mb-6";
+  p.style.fontSize = "1.5rem";
+  p.style.lineHeight = "2.2";
+  container.appendChild(p);
+  let charIndex = 0;
+  let paragraph = paragraphs[pIndex];
+
+  function typeChar() {
+    if (charIndex < paragraph.length) {
+      p.textContent += paragraph.charAt(charIndex);
+      charIndex++;
+      setTimeout(typeChar, typingSpeed);
+    } else {
+      pIndex++;
+      setTimeout(typeParagraph, 400);
+    }
+  }
+  typeChar();
+}
+
+setTimeout(typeParagraph, 1000);
 {% endif %}
 
 function copyToClipboard() {
-  const coverLetterText = document.getElementById('ai-typing-container').textContent;
+  const coverLetterText = {{ letter_markdown | default('') | tojson | safe }};
   navigator.clipboard.writeText(coverLetterText).then(function() {
     showNotification('Cover letter copied to clipboard successfully!', 'success');
   }).catch(function() {
@@ -306,14 +337,14 @@ function copyToClipboard() {
 }
 
 function downloadCoverLetter() {
-  const coverLetterText = document.getElementById('ai-typing-container').textContent;
+  const coverLetterText = {{ letter_markdown | default('') | tojson | safe }};
   const blob = new Blob([coverLetterText], { type: 'text/plain;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   const timestamp = new Date().toISOString().slice(0, 10);
 
   a.href = url;
-  a.download = `Professional_Cover_Letter_${timestamp}.txt`;
+  a.download = `Professional_Cover_Letter_${timestamp}.md`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -352,6 +383,50 @@ function showNotification(message, type) {
       }
     }, 300);
   }, 4000);
+}
+
+// PDF Download with Template/Color Selection for Cover Letter
+function downloadTemplatePDF(docType) {
+  // You must set selectedTemplate and selectedColorOption in your UI code!
+  // Example: let selectedTemplate = 'professional'; let selectedColorOption = 'color';
+  const content = docType === 'cover_letter'
+    ? {{ letter_markdown | default('') | tojson | safe }}
+    : {{ resume_markdown | default('') | tojson | safe }};
+  const userInfo = {
+    name: "{{ current_user.name }}",
+    email: "{{ current_user.email }}"
+  };
+  fetch('/download-template-pdf', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      template: window.selectedTemplate || 'professional',
+      colorOption: window.selectedColorOption || 'color',
+      docType: docType,
+      content: content,
+      isMarkdown: true,
+      userInfo: userInfo
+    })
+  })
+  .then(response => {
+    if (!response.ok) throw new Error('Network response was not ok');
+    return response.blob();
+  })
+  .then(blob => {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = `${docType}_${window.selectedTemplate || 'professional'}_${new Date().toISOString().slice(0, 10)}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    showNotification('📄 PDF downloaded successfully!', 'success');
+  })
+  .catch(error => {
+    showNotification('Failed to download PDF. Please try again.', 'error');
+  });
 }
 </script>
 {% endblock %}

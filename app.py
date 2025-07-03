@@ -10,6 +10,11 @@ import openai
 import docx
 from PyPDF2 import PdfReader
 from striprtf.striprtf import rtf_to_text
+from models import db
+from flask import make_response, render_template_string
+from weasyprint import HTML
+import markdown
+import re
 
 # Load environment variables
 load_dotenv()
@@ -37,6 +42,7 @@ login_manager.login_view = 'login'
 
 # Set OpenAI API key
 openai.api_key = os.getenv("OPENAI_API_KEY")
+
 
 # Import models after db initialization
 from models import User, Resume, ResumeInput, UsageLog, CoverLetter
@@ -189,73 +195,32 @@ def resume_list():
     resumes = Resume.query.filter_by(user_id=current_user.id).order_by(Resume.created_at.desc()).all()
     return render_template("resumes_list.html", resumes=resumes)
 
-#@app.route("/resume/new")
-#def new_resume_form():
-    #return render_template("generate_resume.html")
-
-
 def generate_professional_resume(original_content):
-    """Generate a world-class professional resume from uploaded content"""
+    """Enhance and professionally rewrite the uploaded resume content only—do not add, comment, or explain."""
     try:
-        # Comprehensive analysis and enhancement prompt
         prompt = f"""
-        You are a world-class resume writer and career coach. Analyze the following resume content and create a professional, ATS-optimized resume that meets international standards.
-
-        ORIGINAL RESUME CONTENT:
-        {original_content}
-
-        REQUIREMENTS:
-        1. Create a modern, professional resume structure with these sections:
-           - Contact Information (clean, professional format)
-           - Professional Summary (2-3 powerful sentences)
-           - Core Skills (ATS-friendly keyword optimization)
-           - Professional Experience (with quantified achievements)
-           - Education
-           - Certifications (if applicable)
-
-        2. ENHANCEMENT GUIDELINES:
-           - Use strong action verbs and quantifiable achievements
-           - Optimize for Applicant Tracking Systems (ATS)
-           - Include industry-relevant keywords naturally
-           - Ensure consistent formatting and professional language
-           - Focus on results and impact rather than just responsibilities
-           - Use proper resume formatting with clear section headers
-           - Keep bullet points concise and impactful
-           - Maintain chronological order for work experience
-
-        3. PROFESSIONAL STANDARDS:
-           - Use formal business language
-           - Ensure error-free grammar and spelling
-           - Apply consistent date formatting (MM/YYYY)
-           - Include measurable results where possible (percentages, numbers, achievements)
-           - Tailor language to be professional yet engaging
-           - Remove any unprofessional elements or excessive personal information
-
-        4. ATS OPTIMIZATION:
-           - Use standard section headings
-           - Include relevant keywords from common job descriptions in the field
-           - Avoid graphics, tables, or unusual formatting
-           - Use simple, clean bullet points
-           - Ensure proper spacing and readability
-
-        Generate a complete, professional resume that would pass both ATS systems and impress hiring managers. Format it cleanly with clear section breaks and professional presentation.
+                  Here's my resune , please enhance it 
+         {original_content}
         """
-
         response = openai.ChatCompletion.create(
             model="gpt-4o-mini",
             messages=[
                 {"role": "system",
-                 "content": "You are an expert resume writer specializing in creating world-class, ATS-optimized professional resumes."},
+                 "content": """You are an expert resume writer. 
+                            Rewrite and enhance the following resume content to be more clear, impactful, and professional. 
+                            Do NOT add new sections, do NOT add any comments or instructions, and do NOT include any explanations or extra text. 
+                            Return ONLY the improved resume content, preserving the user's structure and sections as much as possible."""
+                 },
+
                 {"role": "user", "content": prompt}
             ],
-            temperature=0.3,  # Lower temperature for more consistent, professional output
+            temperature=0.3,
             max_tokens=2000
         )
-
         return response.choices[0].message['content'].strip()
-
     except Exception as e:
         return f"⚠️ AI Enhancement Error: {str(e)}"
+
 
 
 @app.route("/resume/enhanced/<int:id>")
@@ -264,8 +229,13 @@ def view_enhanced_resume(id):
     resume = Resume.query.get_or_404(id)
     if resume.user_id != current_user.id:
         abort(403)
-    return render_template("enhanced_resume_view.html", resume=resume)
-
+    html_content = markdown.markdown(resume.text_content)
+    return render_template(
+        "enhanced_resume_view.html",
+        resume=resume,
+        html_content=html_content,
+        resume_markdown=resume.text_content
+    )
 
 @app.route("/resume/compare/<int:original_id>/<int:enhanced_id>")
 @login_required
@@ -279,7 +249,7 @@ def compare_resumes(original_id, enhanced_id):
     return render_template("compare_resumes.html", original=original, enhanced=enhanced)
 
 
-# Delete route with explicit endpoint
+# Deleting the route with explicit endpoint by the user
 @app.route("/resume/<int:id>/delete", methods=["POST"], endpoint='delete_resume_endpoint')
 @login_required
 def delete_resume(id):
@@ -290,7 +260,7 @@ def delete_resume(id):
     db.session.commit()
     return redirect(url_for('my_resumes'))
 
-# View route with explicit endpoint
+# Viewing the  route with explicit endpoint
 @app.route("/resume/<int:id>", endpoint='view_resume_endpoint')
 @login_required
 def view_resume(id):
@@ -302,7 +272,7 @@ def view_resume(id):
 
 
 
-# Update Resume - edit resume text or metadata
+# Update Resume - edit resume text
 @app.route("/resume/<int:id>/edit", methods=["GET", "POST"])
 @login_required
 def edit_resume(id):
@@ -369,28 +339,53 @@ def logout():
 
 @app.route('/career-advice', methods=['GET', 'POST'])
 def career_advice():
+    if 'chat_history' not in session:
+        session['chat_history'] = []
+
     advice = None
     if request.method == 'POST':
-        question = request.form['question']
-
+        question = request.form['question'].strip()
         if not question:
             return "Please ask a valid question.", 400
+
+        # System prompt tells the AI to act as if it remembers the conversation
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    "You are an expert career advisor. "
+                    "You always remember the user's previous questions and your previous answers in this conversation, "
+                    "and you refer back to them naturally when helpful. "
+                    "Do not mention memory limitations. "
+                    "If the user asks about remembering, respond as if you remember everything in this chat."
+                )
+            }
+        ]
+        for turn in session['chat_history']:
+            messages.append({"role": "user", "content": turn['question']})
+            messages.append({"role": "assistant", "content": turn['answer']})
+        messages.append({"role": "user", "content": question})
 
         try:
             response = openai.ChatCompletion.create(
                 model="gpt-4o-mini",
-                messages=[
-                    {"role": "system", "content": "You are an expert career advisor."},
-                    {"role": "user", "content": question}
-                ],
-                max_tokens=10000
+                messages=messages,
+                max_tokens=1200
             )
             advice = response['choices'][0]['message']['content'].strip()
+            session['chat_history'].append({'question': question, 'answer': advice})
+            session.modified = True
         except Exception as e:
             return f"An error occurred: {str(e)}"
 
+    # Do NOT pass chat_history to the template
     return render_template("career_advice.html", advice=advice)
 
+
+
+def strip_markdown_code_fences(text):
+    # Remove all triple-backtick code blocks (with or without language label)
+    return re.sub(r"``````", "", text)
 
 @app.route("/cover-letter", methods=["GET", "POST"])
 @login_required
@@ -401,7 +396,7 @@ def cover_letter():
 
         if not resume_text or not job_info:
             flash("Please provide both resume text and job information", "error")
-            return render_template("cover_letter.html")
+            return render_template("cover_letter.html", letter="", letter_markdown="")
 
         try:
             prompt = f"""
@@ -425,6 +420,8 @@ def cover_letter():
             - Keep under 400 words
             - Include quantifiable achievements
             - Address to "Hiring Manager" if no name available
+            - Format the entire letter using Markdown syntax (headers, bold, lists, etc.)
+            - Do NOT use code blocks or triple backticks anywhere in your output.
             """
 
             response = openai.ChatCompletion.create(
@@ -436,32 +433,27 @@ def cover_letter():
                 temperature=0.7,
                 max_tokens=1200
             )
-            letter = response.choices[0].message["content"].strip()
+            letter_markdown = response.choices[0].message["content"].strip()
+            print("AI raw output:", repr(letter_markdown))
 
-            return render_template("cover_letter.html", letter=letter)
+            letter_markdown_clean = strip_markdown_code_fences(letter_markdown)
+            print("Cleaned markdown:", repr(letter_markdown_clean))
+
+            letter_html = markdown.markdown(letter_markdown_clean)
+
+            return render_template(
+                "cover_letter.html",
+                letter=letter_html,
+                letter_markdown=letter_markdown_clean
+            )
 
         except Exception as e:
+            print("AI error:", e)
             flash(f"Error generating cover letter: {str(e)}", "error")
-            return render_template("cover_letter.html")
+            return render_template("cover_letter.html", letter="", letter_markdown="")
 
-    # Return the form on GET requests
-    return render_template("cover_letter.html")
+    return render_template("cover_letter.html", letter="", letter_markdown="")
 
-
-@app.route("/interview-tips", methods=["GET", "POST"])
-def interview_tips():
-    tips = None
-    if request.method == "POST":
-        job_desc = request.form["job_desc"]
-        prompt = f"""
-        I'm preparing for an interview. Can you give me a list of 10 specific and relevant interview questions (with answers if possible) for a position in: {job_desc}?
-        """
-        response = openai.ChatCompletion.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": prompt}]
-        )
-        tips = response.choices[0].message["content"]
-    return render_template("interview_tips.html", tips=tips)
 
 @app.errorhandler(404)
 def page_not_found(e):
@@ -475,15 +467,228 @@ def my_resumes():
 
 
 
-@app.route('/download-template-resume', methods=['POST'])
+
+@app.route('/download-template-pdf', methods=['POST'])
 @login_required
-def download_template_resume():
+def download_template_pdf():
     data = request.get_json()
     template_type = data['template']
     color_option = data['colorOption']
     content = data['content']
-    pass
+    doc_type = data.get('docType', 'resume')
+    user_info = data.get('userInfo', {})
 
+    # Convert Markdown to HTML if needed
+    import markdown
+    if data.get('isMarkdown', False):
+        content_html = markdown.markdown(content)
+    else:
+        content_html = content
+
+    # Select template HTML based on template_type, color_option, and doc_type
+    if doc_type == "cover_letter":
+        # Use cover letter template styles
+        template_html = """
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <style>
+                body { font-family: Arial, sans-serif; margin: 40px; }
+                h1, h2, h3 { color: #d97706; }
+                .header { margin-bottom: 32px; }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>{{ name }}</h1>
+                <div>{{ email }}</div>
+            </div>
+            <div class="letter">
+                {{ content_html | safe }}
+            </div>
+        </body>
+        </html>
+        """
+    else:
+        # Use resume template styles as before, with template_type/color_option logic
+        if template_type == "professional":
+            template_html = """
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 40px; }
+                    h1 { color: #2563eb; }
+                    .section { margin-bottom: 24px; }
+                    .header { background: #2563eb; color: white; padding: 12px; border-radius: 8px; }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>{{ name }}</h1>
+                    <div>{{ email }}</div>
+                </div>
+                <div class="section">
+                    {{ content_html | safe }}
+                </div>
+            </body>
+            </html>
+            """
+        elif template_type == "modern":
+            template_html = """
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <style>
+                    body { font-family: 'Segoe UI', sans-serif; margin: 40px; background: #e0f2fe; }
+                    h1 { color: #059669; }
+                    .section { margin-bottom: 24px; }
+                    .header { background: #059669; color: white; padding: 12px; border-radius: 8px; }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>{{ name }}</h1>
+                    <div>{{ email }}</div>
+                </div>
+                <div class="section">
+                    {{ content_html | safe }}
+                </div>
+            </body>
+            </html>
+            """
+        else:  # creative or fallback
+            template_html = """
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <style>
+                    body { font-family: 'Georgia', serif; margin: 40px; background: #f3e8ff; }
+                    h1 { color: #a21caf; }
+                    .section { margin-bottom: 24px; }
+                    .header { background: #a21caf; color: white; padding: 12px; border-radius: 8px; }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>{{ name }}</h1>
+                    <div>{{ email }}</div>
+                </div>
+                <div class="section">
+                    {{ content_html | safe }}
+                </div>
+            </body>
+            </html>
+            """
+
+    rendered_html = render_template_string(
+        template_html,
+        name=user_info.get('name', 'Your Name'),
+        email=user_info.get('email', 'your@email.com'),
+        content_html=content_html
+    )
+
+    from weasyprint import HTML
+    pdf = HTML(string=rendered_html).write_pdf()
+    response = make_response(pdf)
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'attachment; filename={doc_type.capitalize()}_{template_type}.pdf'
+    return response
+
+
+@app.route('/download-template-resume', methods=['POST'])
+@login_required
+def download_template_resume():
+    data = request.get_json()
+    template_type = data.get('template', 'professional')
+    color_option = data.get('colorOption', 'color')
+    content = data.get('content', '')
+    user_info = data.get('userInfo', {})
+    is_markdown = data.get('isMarkdown', False)
+
+    # Convert Markdown to HTML if needed
+    content_html = markdown.markdown(content) if is_markdown else content
+
+    # Select template HTML based on template_type and color_option
+    if template_type == "professional":
+        template_html = """
+        <html>
+        <head>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 40px; }
+                h1 { color: #2563eb; }
+                .section { margin-bottom: 24px; }
+                .header { background: #2563eb; color: white; padding: 12px; border-radius: 8px; }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>{{ name }}</h1>
+                <div>{{ email }}</div>
+            </div>
+            <div class="section">
+                {{ content_html | safe }}
+            </div>
+        </body>
+        </html>
+        """
+    elif template_type == "modern":
+        template_html = """
+        <html>
+        <head>
+            <style>
+                body { font-family: 'Segoe UI', sans-serif; margin: 40px; background: #e0f2fe; }
+                h1 { color: #059669; }
+                .section { margin-bottom: 24px; }
+                .header { background: #059669; color: white; padding: 12px; border-radius: 8px; }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>{{ name }}</h1>
+                <div>{{ email }}</div>
+            </div>
+            <div class="section">
+                {{ content_html | safe }}
+            </div>
+        </body>
+        </html>
+        """
+    else:  # creative or fallback
+        template_html = """
+        <html>
+        <head>
+            <style>
+                body { font-family: 'Georgia', serif; margin: 40px; background: #f3e8ff; }
+                h1 { color: #a21caf; }
+                .section { margin-bottom: 24px; }
+                .header { background: #a21caf; color: white; padding: 12px; border-radius: 8px; }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>{{ name }}</h1>
+                <div>{{ email }}</div>
+            </div>
+            <div class="section">
+                {{ content_html | safe }}
+            </div>
+        </body>
+        </html>
+        """
+
+    rendered_html = render_template_string(
+        template_html,
+        name=user_info.get('name', 'Your Name'),
+        email=user_info.get('email', 'your@email.com'),
+        content_html=content_html
+    )
+
+    pdf = HTML(string=rendered_html).write_pdf()
+    response = make_response(pdf)
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'attachment; filename=Resume_{template_type}.pdf'
+    return response
 
 
 @app.context_processor

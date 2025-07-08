@@ -59,7 +59,7 @@ Career Coach is a modern web application that leverages AI to help users improve
 
 
 
-7. **Open your browser and navigate to ` http://127.0.0.1:5001`.**
+7. **Open your browser and navigate to `http://localhost:5001`.**
 
 ---
 

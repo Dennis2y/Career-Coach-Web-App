@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, abort, flash
+from flask import Flask, render_template, request, redirect, url_for, session, abort, flash, make_response, render_template_string, send_file
 from flask_migrate import Migrate
 from flask_login import LoginManager, login_required, login_user, current_user, logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -6,12 +6,11 @@ from werkzeug.utils import secure_filename
 from datetime import datetime
 from dotenv import load_dotenv
 import os
-import openai
+from openai import OpenAI
 import docx
 from PyPDF2 import PdfReader
 from striprtf.striprtf import rtf_to_text
 from models import db
-from flask import make_response, render_template_string,  send_file
 from weasyprint import HTML
 import markdown
 import re
@@ -32,7 +31,6 @@ if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
 # Initialize extensions
-from models import db
 db.init_app(app)
 migrate = Migrate(app, db)
 
@@ -40,9 +38,8 @@ migrate = Migrate(app, db)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
-# Set OpenAI API key
-openai.api_key = os.getenv("OPENAI_API_KEY")
-
+# Initialize OpenAI client
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # Import models after db initialization
 from models import User, Resume, ResumeInput, UsageLog, CoverLetter
@@ -51,7 +48,6 @@ from models import User, Resume, ResumeInput, UsageLog, CoverLetter
 @login_manager.user_loader
 def load_user(user_id):
     return db.session.get(User, int(user_id))
-
 
 @app.route("/")
 def home():
@@ -69,11 +65,13 @@ def admin_dashboard():
 def dashboard():
     return render_template("dashboard.html")
 
-
 ALLOWED_EXTENSIONS = {'pdf', 'docx', 'txt', 'rtf'}
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def allowed_photo(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg'}
 
 def extract_text(file_path, ext):
     if ext == 'pdf':
@@ -98,24 +96,17 @@ def extract_text(file_path, ext):
     else:
         raise ValueError("Unsupported file type")
 
-
 @app.route("/upload", methods=["GET", "POST"])
 @login_required
 def upload_resume():
     if request.method == "POST":
-        # 1. Validate file existence
         if 'resume' not in request.files:
             return "No file part", 400
-
         file = request.files['resume']
         if file.filename == '':
             return "No selected file", 400
-
-        # 2. Ensure upload directory exists
         upload_folder = app.config['UPLOAD_FOLDER']
-        os.makedirs(upload_folder, exist_ok=True)  # Critical fix
-
-        # 3. Handle photo upload
+        os.makedirs(upload_folder, exist_ok=True)
         photo_path = None
         if 'photo' in request.files:
             photo = request.files['photo']
@@ -126,22 +117,15 @@ def upload_resume():
                     photo.save(photo_path)
                 except Exception as e:
                     return f"Photo save error: {str(e)}", 500
-
-        # 4. Process resume file
         selected_template = request.form.get("template", "professional")
-
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             ext = filename.rsplit('.', 1)[1].lower()
             path = os.path.join(upload_folder, filename)
-
             try:
                 file.save(path)
-
                 content = extract_text(path, ext)
                 professional_resume = generate_professional_resume(content)
-
-                #  Database operations
                 enhanced_resume = Resume(
                     user_id=current_user.id,
                     type="ai_enhanced",
@@ -152,7 +136,6 @@ def upload_resume():
                     template_name=selected_template,
                     created_at=datetime.now()
                 )
-
                 original_resume = Resume(
                     user_id=current_user.id,
                     type="uploaded_original",
@@ -160,49 +143,33 @@ def upload_resume():
                     text_content=content,
                     created_at=datetime.now()
                 )
-
                 db.session.add(original_resume)
                 db.session.add(enhanced_resume)
                 db.session.commit()
-
                 return redirect(url_for('view_enhanced_resume', id=enhanced_resume.id))
-
             except Exception as e:
-                # 6. Comprehensive error cleanup
                 if photo_path and os.path.exists(photo_path):
                     os.remove(photo_path)
                 if path and os.path.exists(path):
                     os.remove(path)
                 return f"Error processing file: {str(e)}", 500
-
         return "Invalid file type. Supported formats: PDF, DOCX, TXT, RTF", 400
-
     return render_template("upload.html")
 
-
-# Helper function for photo validation
-def allowed_photo(filename):
-    return '.' in filename and \
-        filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg'}
-
 def clean_letter_markdown(letter_markdown, user_email):
-    # Remove duplicate email lines (only keep one instance)
     lines = letter_markdown.split('\n')
     cleaned = []
     email_seen = False
-
     for line in lines:
         if line.strip() == user_email:
             if not email_seen:
                 cleaned.append(line)
                 email_seen = True
             else:
-                continue  # Skip duplicates
+                continue
         else:
             cleaned.append(line)
-
     return '\n'.join(cleaned)
-
 
 @app.route("/resumes")
 @login_required
@@ -211,13 +178,12 @@ def resume_list():
     return render_template("resumes_list.html", resumes=resumes)
 
 def generate_professional_resume(original_content):
-    """Enhance and professionally rewrite the uploaded resume content only—do not add, comment, or explain."""
     try:
         prompt = f"""
                   Here's my resune , please enhance it 
          {original_content}
         """
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
                 {"role": "system",
@@ -226,16 +192,14 @@ def generate_professional_resume(original_content):
                             Do NOT add new sections, do NOT add any comments or instructions, and do NOT include any explanations or extra text. 
                             Return ONLY the improved resume content, preserving the user's structure and sections as much as possible."""
                  },
-
                 {"role": "user", "content": prompt}
             ],
             temperature=0.3,
             max_tokens=2000
         )
-        return response.choices[0].message['content'].strip()
+        return response.choices[0].message.content.strip()
     except Exception as e:
         return f"⚠️ AI Enhancement Error: {str(e)}"
-
 
 @app.route("/resume/enhanced/<int:id>")
 @login_required
@@ -256,14 +220,10 @@ def view_enhanced_resume(id):
 def compare_resumes(original_id, enhanced_id):
     original = Resume.query.get_or_404(original_id)
     enhanced = Resume.query.get_or_404(enhanced_id)
-
     if original.user_id != current_user.id or enhanced.user_id != current_user.id:
         abort(403)
-
     return render_template("compare_resumes.html", original=original, enhanced=enhanced)
 
-
-# Deleting the route with explicit endpoint by the user
 @app.route("/resume/<int:id>/delete", methods=["POST"], endpoint='delete_resume_endpoint')
 @login_required
 def delete_resume(id):
@@ -274,7 +234,6 @@ def delete_resume(id):
     db.session.commit()
     return redirect(url_for('my_resumes'))
 
-# Viewing the  route with explicit endpoint
 @app.route("/resume/<int:id>", endpoint='view_resume_endpoint')
 @login_required
 def view_resume(id):
@@ -283,34 +242,26 @@ def view_resume(id):
         abort(403)
     return render_template("resume_view.html", resume=resume)
 
-
-# Update Resume - edit resume text
 @app.route("/resume/<int:id>/edit", methods=["GET", "POST"])
 @login_required
 def edit_resume(id):
     resume = Resume.query.get_or_404(id)
     if resume.user_id != current_user.id:
         abort(403)
-
     if request.method == "POST":
         new_text = request.form.get("text_content", "").strip()
         new_template = request.form.get("template_name", "").strip()
-
         if not new_text:
             flash("Resume content cannot be empty", "error")
             return render_template("edit_resume.html", resume=resume)
-
         resume.text_content = new_text
         if new_template:
             resume.template_name = new_template
-
         db.session.commit()
         flash("Resume updated successfully", "success")
         return redirect(url_for('view_resume_endpoint', id=resume.id))
-
     return render_template("edit_resume.html", resume=resume)
 
-# Registration part for the user
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
@@ -318,24 +269,17 @@ def register():
         email = request.form["email"]
         password = request.form["password"]
         confirm_password = request.form["confirm_password"]
-
         if password != confirm_password:
             return render_template("register.html", error="Passwords do not match")
-
-        # Check if email already exists
         existing_user = User.query.filter_by(email=email).first()
         if existing_user:
             return render_template("register.html", error="Email is already registered")
-
         hashed_password = generate_password_hash(password)
         user = User(name=username, email=email, password=hashed_password)
         db.session.add(user)
         db.session.commit()
-
         return redirect(url_for("login"))
-
     return render_template("register.html")
-
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -346,25 +290,21 @@ def login():
             return redirect(url_for('home'))
     return render_template("login.html")
 
-
 @app.route('/logout')
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('home'))  # Changed to redirect
+    return redirect(url_for('home'))
 
 @app.route('/career-advice', methods=['GET', 'POST'])
 def career_advice():
     if 'chat_history' not in session:
         session['chat_history'] = []
-
     advice = None
     if request.method == 'POST':
         question = request.form['question'].strip()
         if not question:
             return "Please ask a valid question.", 400
-
-        # System prompt tells the AI to act as if it remembers the conversation
         messages = [
             {
                 "role": "system",
@@ -381,24 +321,20 @@ def career_advice():
             messages.append({"role": "user", "content": turn['question']})
             messages.append({"role": "assistant", "content": turn['answer']})
         messages.append({"role": "user", "content": question})
-
         try:
-            response = openai.ChatCompletion.create(
+            response = client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=messages,
                 max_tokens=1200
             )
-            advice = response['choices'][0]['message']['content'].strip()
+            advice = response.choices[0].message.content.strip()
             session['chat_history'].append({'question': question, 'answer': advice})
             session.modified = True
         except Exception as e:
             return f"An error occurred: {str(e)}"
-
-    # Do NOT pass chat_history to the template
     return render_template("career_advice.html", advice=advice)
 
 def strip_markdown_code_fences(text):
-    # Remove all triple-backtick code blocks (with or without language label)
     return re.sub(r"``````", "", text)
 
 @app.route("/cover-letter", methods=["GET", "POST"])
@@ -407,11 +343,9 @@ def cover_letter():
     if request.method == "POST":
         resume_text = request.form.get("resume_text", "").strip()
         job_info = request.form.get("job_info", "").strip()
-
         if not resume_text or not job_info:
             flash("Please provide both resume text and job information", "error")
             return render_template("cover_letter.html", letter="", letter_markdown="")
-
         try:
             prompt = f"""
             Write a professional cover letter with these sections:
@@ -437,8 +371,7 @@ def cover_letter():
             - Format the entire letter using Markdown syntax (headers, bold, lists, etc.)
             - Do NOT use code blocks or triple backticks anywhere in your output.
             """
-
-            response = openai.ChatCompletion.create(
+            response = client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
                     {"role": "system", "content": "You are a professional resume writer"},
@@ -447,31 +380,22 @@ def cover_letter():
                 temperature=0.7,
                 max_tokens=1200
             )
-
-            letter_markdown = response.choices[0].message["content"].strip()
+            letter_markdown = response.choices[0].message.content.strip()
             print("AI raw output:", repr(letter_markdown))
-
             letter_markdown_clean = strip_markdown_code_fences(letter_markdown)
-
             letter_markdown_clean = clean_letter_markdown(letter_markdown_clean, current_user.email)
-
             print("Cleaned markdown:", repr(letter_markdown_clean))
-
             letter_html = markdown.markdown(letter_markdown_clean)
-
             return render_template(
                 "cover_letter.html",
                 letter=letter_html,
                 letter_markdown=letter_markdown_clean
             )
-
         except Exception as e:
             print("AI error:", e)
             flash(f"Error generating cover letter: {str(e)}", "error")
             return render_template("cover_letter.html", letter="", letter_markdown="")
-
     return render_template("cover_letter.html", letter="", letter_markdown="")
-
 
 def clean_letter_markdown(letter_markdown, user_email):
     email_pattern = re.compile(re.escape(user_email.strip()), re.IGNORECASE)
@@ -483,11 +407,9 @@ def clean_letter_markdown(letter_markdown, user_email):
             if not email_seen:
                 cleaned.append(line)
                 email_seen = True
-            # else skip duplicates
         else:
             cleaned.append(line)
     return '\n'.join(cleaned)
-
 
 @app.errorhandler(404)
 def page_not_found(e):
@@ -499,31 +421,21 @@ def my_resumes():
     resumes = Resume.query.filter_by(user_id=current_user.id).all()
     return render_template("resumes_list.html", resumes=resumes)
 
-
-
-
 @app.route('/download-template-pdf', methods=['POST'])
 @login_required
 def download_template_pdf():
     from markupsafe import Markup
     data = request.get_json()
-
     template_type = data['template']
     color_option = data['colorOption']
     content = data['content']
     doc_type = data.get('docType', 'resume')
     user_info = data.get('userInfo', {})
     is_markdown = data.get('isMarkdown', False)
-
     name = user_info.get('name', 'Your Name').strip()
     email = user_info.get('email', 'your@email.com').strip()
-
     content = clean_letter_markdown(content, email)
-
     content_html = markdown.markdown(content) if is_markdown else content
-
-
-    # 📄 Choose correct template
     if doc_type == "cover_letter":
         template_html = """
         <html>
@@ -589,7 +501,7 @@ def download_template_pdf():
         </body>
         </html>
         """
-    else:  # creative
+    else:
         template_html = """
         <html>
         <head>
@@ -611,37 +523,28 @@ def download_template_pdf():
         </body>
         </html>
         """
-
     rendered_html = render_template_string(
         template_html,
         name=name,
         content_html=Markup(content_html)
     )
-
-
     pdf = HTML(string=rendered_html).write_pdf()
     response = make_response(pdf)
     response.headers['Content-Type'] = 'application/pdf'
     response.headers['Content-Disposition'] = f'attachment; filename={doc_type.capitalize()}_{template_type}.pdf'
     return response
 
-
 def remove_header_emails(text):
-    """
-    Removes all lines at the top of the document that contain an email address.
-    """
     email_pattern = re.compile(r'^[\s>]*[\w\.-]+@[\w\.-]+\.\w+[\s<]*$', re.IGNORECASE)
     lines = text.splitlines()
     new_lines = []
     email_found = False
     for line in lines:
-        # Only remove email lines at the very top
         if not new_lines and email_pattern.match(line.strip()):
-            continue  # skip this line
+            continue
         else:
             new_lines.append(line)
     return "\n".join(new_lines)
-
 
 @app.route('/download-template-resume', methods=['POST'])
 @login_required

@@ -384,17 +384,18 @@ function downloadTemplate(templateType, colorOption) {
     name: "{{ current_user.name }}",
     email: "{{ current_user.email }}"
   };
-  fetch('/download-template-resume', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      template: templateType,
-      colorOption: colorOption,
-      content: resumeContent,
-      isMarkdown: true,
-      userInfo: userInfo
-    })
+ fetch('/download-template-pdf', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    template: templateType,
+    colorOption: colorOption,
+    content: resumeContent,
+    isMarkdown: true,
+    userInfo: userInfo
   })
+})
+
   .then(response => {
     if (!response.ok) throw new Error('Network response was not ok');
     return response.blob();

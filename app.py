@@ -11,7 +11,7 @@ import docx
 from PyPDF2 import PdfReader
 from striprtf.striprtf import rtf_to_text
 from models import db
-from flask import make_response, render_template_string
+from flask import make_response, render_template_string,  send_file
 from weasyprint import HTML
 import markdown
 import re
@@ -136,14 +136,12 @@ def upload_resume():
             path = os.path.join(upload_folder, filename)
 
             try:
-                # Save resume first
                 file.save(path)
 
-                # Extract and process content
                 content = extract_text(path, ext)
                 professional_resume = generate_professional_resume(content)
 
-                # 5. Database operations
+                #  Database operations
                 enhanced_resume = Resume(
                     user_id=current_user.id,
                     type="ai_enhanced",
@@ -187,6 +185,23 @@ def allowed_photo(filename):
     return '.' in filename and \
         filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg'}
 
+def clean_letter_markdown(letter_markdown, user_email):
+    # Remove duplicate email lines (only keep one instance)
+    lines = letter_markdown.split('\n')
+    cleaned = []
+    email_seen = False
+
+    for line in lines:
+        if line.strip() == user_email:
+            if not email_seen:
+                cleaned.append(line)
+                email_seen = True
+            else:
+                continue  # Skip duplicates
+        else:
+            cleaned.append(line)
+
+    return '\n'.join(cleaned)
 
 
 @app.route("/resumes")
@@ -220,7 +235,6 @@ def generate_professional_resume(original_content):
         return response.choices[0].message['content'].strip()
     except Exception as e:
         return f"⚠️ AI Enhancement Error: {str(e)}"
-
 
 
 @app.route("/resume/enhanced/<int:id>")
@@ -270,8 +284,6 @@ def view_resume(id):
     return render_template("resume_view.html", resume=resume)
 
 
-
-
 # Update Resume - edit resume text
 @app.route("/resume/<int:id>/edit", methods=["GET", "POST"])
 @login_required
@@ -298,7 +310,6 @@ def edit_resume(id):
 
     return render_template("edit_resume.html", resume=resume)
 
-
 # Registration part for the user
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -310,6 +321,11 @@ def register():
 
         if password != confirm_password:
             return render_template("register.html", error="Passwords do not match")
+
+        # Check if email already exists
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
+            return render_template("register.html", error="Email is already registered")
 
         hashed_password = generate_password_hash(password)
         user = User(name=username, email=email, password=hashed_password)
@@ -381,8 +397,6 @@ def career_advice():
     # Do NOT pass chat_history to the template
     return render_template("career_advice.html", advice=advice)
 
-
-
 def strip_markdown_code_fences(text):
     # Remove all triple-backtick code blocks (with or without language label)
     return re.sub(r"``````", "", text)
@@ -433,10 +447,14 @@ def cover_letter():
                 temperature=0.7,
                 max_tokens=1200
             )
+
             letter_markdown = response.choices[0].message["content"].strip()
             print("AI raw output:", repr(letter_markdown))
 
             letter_markdown_clean = strip_markdown_code_fences(letter_markdown)
+
+            letter_markdown_clean = clean_letter_markdown(letter_markdown_clean, current_user.email)
+
             print("Cleaned markdown:", repr(letter_markdown_clean))
 
             letter_html = markdown.markdown(letter_markdown_clean)
@@ -455,6 +473,22 @@ def cover_letter():
     return render_template("cover_letter.html", letter="", letter_markdown="")
 
 
+def clean_letter_markdown(letter_markdown, user_email):
+    email_pattern = re.compile(re.escape(user_email.strip()), re.IGNORECASE)
+    lines = letter_markdown.split('\n')
+    cleaned = []
+    email_seen = False
+    for line in lines:
+        if email_pattern.search(line.strip()):
+            if not email_seen:
+                cleaned.append(line)
+                email_seen = True
+            # else skip duplicates
+        else:
+            cleaned.append(line)
+    return '\n'.join(cleaned)
+
+
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template("404.html"), 404
@@ -471,23 +505,26 @@ def my_resumes():
 @app.route('/download-template-pdf', methods=['POST'])
 @login_required
 def download_template_pdf():
+    from markupsafe import Markup
     data = request.get_json()
+
     template_type = data['template']
     color_option = data['colorOption']
     content = data['content']
     doc_type = data.get('docType', 'resume')
     user_info = data.get('userInfo', {})
+    is_markdown = data.get('isMarkdown', False)
 
-    # Convert Markdown to HTML if needed
-    import markdown
-    if data.get('isMarkdown', False):
-        content_html = markdown.markdown(content)
-    else:
-        content_html = content
+    name = user_info.get('name', 'Your Name').strip()
+    email = user_info.get('email', 'your@email.com').strip()
 
-    # Select template HTML based on template_type, color_option, and doc_type
+    content = clean_letter_markdown(content, email)
+
+    content_html = markdown.markdown(content) if is_markdown else content
+
+
+    # 📄 Choose correct template
     if doc_type == "cover_letter":
-        # Use cover letter template styles
         template_html = """
         <html>
         <head>
@@ -501,7 +538,6 @@ def download_template_pdf():
         <body>
             <div class="header">
                 <h1>{{ name }}</h1>
-                <div>{{ email }}</div>
             </div>
             <div class="letter">
                 {{ content_html | safe }}
@@ -509,111 +545,11 @@ def download_template_pdf():
         </body>
         </html>
         """
-    else:
-        # Use resume template styles as before, with template_type/color_option logic
-        if template_type == "professional":
-            template_html = """
-            <html>
-            <head>
-                <meta charset="utf-8">
-                <style>
-                    body { font-family: Arial, sans-serif; margin: 40px; }
-                    h1 { color: #2563eb; }
-                    .section { margin-bottom: 24px; }
-                    .header { background: #2563eb; color: white; padding: 12px; border-radius: 8px; }
-                </style>
-            </head>
-            <body>
-                <div class="header">
-                    <h1>{{ name }}</h1>
-                    <div>{{ email }}</div>
-                </div>
-                <div class="section">
-                    {{ content_html | safe }}
-                </div>
-            </body>
-            </html>
-            """
-        elif template_type == "modern":
-            template_html = """
-            <html>
-            <head>
-                <meta charset="utf-8">
-                <style>
-                    body { font-family: 'Segoe UI', sans-serif; margin: 40px; background: #e0f2fe; }
-                    h1 { color: #059669; }
-                    .section { margin-bottom: 24px; }
-                    .header { background: #059669; color: white; padding: 12px; border-radius: 8px; }
-                </style>
-            </head>
-            <body>
-                <div class="header">
-                    <h1>{{ name }}</h1>
-                    <div>{{ email }}</div>
-                </div>
-                <div class="section">
-                    {{ content_html | safe }}
-                </div>
-            </body>
-            </html>
-            """
-        else:  # creative or fallback
-            template_html = """
-            <html>
-            <head>
-                <meta charset="utf-8">
-                <style>
-                    body { font-family: 'Georgia', serif; margin: 40px; background: #f3e8ff; }
-                    h1 { color: #a21caf; }
-                    .section { margin-bottom: 24px; }
-                    .header { background: #a21caf; color: white; padding: 12px; border-radius: 8px; }
-                </style>
-            </head>
-            <body>
-                <div class="header">
-                    <h1>{{ name }}</h1>
-                    <div>{{ email }}</div>
-                </div>
-                <div class="section">
-                    {{ content_html | safe }}
-                </div>
-            </body>
-            </html>
-            """
-
-    rendered_html = render_template_string(
-        template_html,
-        name=user_info.get('name', 'Your Name'),
-        email=user_info.get('email', 'your@email.com'),
-        content_html=content_html
-    )
-
-    from weasyprint import HTML
-    pdf = HTML(string=rendered_html).write_pdf()
-    response = make_response(pdf)
-    response.headers['Content-Type'] = 'application/pdf'
-    response.headers['Content-Disposition'] = f'attachment; filename={doc_type.capitalize()}_{template_type}.pdf'
-    return response
-
-
-@app.route('/download-template-resume', methods=['POST'])
-@login_required
-def download_template_resume():
-    data = request.get_json()
-    template_type = data.get('template', 'professional')
-    color_option = data.get('colorOption', 'color')
-    content = data.get('content', '')
-    user_info = data.get('userInfo', {})
-    is_markdown = data.get('isMarkdown', False)
-
-    # Convert Markdown to HTML if needed
-    content_html = markdown.markdown(content) if is_markdown else content
-
-    # Select template HTML based on template_type and color_option
-    if template_type == "professional":
+    elif template_type == "professional":
         template_html = """
         <html>
         <head>
+            <meta charset="utf-8">
             <style>
                 body { font-family: Arial, sans-serif; margin: 40px; }
                 h1 { color: #2563eb; }
@@ -624,7 +560,6 @@ def download_template_resume():
         <body>
             <div class="header">
                 <h1>{{ name }}</h1>
-                <div>{{ email }}</div>
             </div>
             <div class="section">
                 {{ content_html | safe }}
@@ -636,6 +571,7 @@ def download_template_resume():
         template_html = """
         <html>
         <head>
+            <meta charset="utf-8">
             <style>
                 body { font-family: 'Segoe UI', sans-serif; margin: 40px; background: #e0f2fe; }
                 h1 { color: #059669; }
@@ -646,7 +582,6 @@ def download_template_resume():
         <body>
             <div class="header">
                 <h1>{{ name }}</h1>
-                <div>{{ email }}</div>
             </div>
             <div class="section">
                 {{ content_html | safe }}
@@ -654,10 +589,11 @@ def download_template_resume():
         </body>
         </html>
         """
-    else:  # creative or fallback
+    else:  # creative
         template_html = """
         <html>
         <head>
+            <meta charset="utf-8">
             <style>
                 body { font-family: 'Georgia', serif; margin: 40px; background: #f3e8ff; }
                 h1 { color: #a21caf; }
@@ -668,7 +604,6 @@ def download_template_resume():
         <body>
             <div class="header">
                 <h1>{{ name }}</h1>
-                <div>{{ email }}</div>
             </div>
             <div class="section">
                 {{ content_html | safe }}
@@ -679,17 +614,47 @@ def download_template_resume():
 
     rendered_html = render_template_string(
         template_html,
-        name=user_info.get('name', 'Your Name'),
-        email=user_info.get('email', 'your@email.com'),
-        content_html=content_html
+        name=name,
+        content_html=Markup(content_html)
     )
+
 
     pdf = HTML(string=rendered_html).write_pdf()
     response = make_response(pdf)
     response.headers['Content-Type'] = 'application/pdf'
-    response.headers['Content-Disposition'] = f'attachment; filename=Resume_{template_type}.pdf'
+    response.headers['Content-Disposition'] = f'attachment; filename={doc_type.capitalize()}_{template_type}.pdf'
     return response
 
+
+def remove_header_emails(text):
+    """
+    Removes all lines at the top of the document that contain an email address.
+    """
+    email_pattern = re.compile(r'^[\s>]*[\w\.-]+@[\w\.-]+\.\w+[\s<]*$', re.IGNORECASE)
+    lines = text.splitlines()
+    new_lines = []
+    email_found = False
+    for line in lines:
+        # Only remove email lines at the very top
+        if not new_lines and email_pattern.match(line.strip()):
+            continue  # skip this line
+        else:
+            new_lines.append(line)
+    return "\n".join(new_lines)
+
+
+@app.route('/download-template-resume', methods=['POST'])
+@login_required
+def download_template_resume():
+    file_path = os.path.join(app.root_path, 'static', 'template.docx')
+    if not os.path.exists(file_path):
+        return "File not found", 404
+    return send_file(
+        file_path,
+        as_attachment=True,
+        download_name='template.docx',
+        mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    )
 
 @app.context_processor
 def inject_now():

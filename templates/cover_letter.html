@@ -385,16 +385,13 @@ function showNotification(message, type) {
   }, 4000);
 }
 
-// PDF Download with Template/Color Selection for Cover Letter
 function downloadTemplatePDF(docType) {
-  // You must set selectedTemplate and selectedColorOption in your UI code!
-  // Example: let selectedTemplate = 'professional'; let selectedColorOption = 'color';
   const content = docType === 'cover_letter'
     ? {{ letter_markdown | default('') | tojson | safe }}
     : {{ resume_markdown | default('') | tojson | safe }};
   const userInfo = {
     name: "{{ current_user.name }}",
-    email: "{{ current_user.email }}"
+
   };
   fetch('/download-template-pdf', {
     method: 'POST',
@@ -422,11 +419,19 @@ function downloadTemplatePDF(docType) {
     a.click();
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
+
+    // Hide email/address div after PDF download
+    const emailDiv = document.getElementById('email-container');
+    if (emailDiv) {
+      emailDiv.style.display = 'none';
+    }
+
     showNotification('📄 PDF downloaded successfully!', 'success');
   })
   .catch(error => {
     showNotification('Failed to download PDF. Please try again.', 'error');
   });
 }
+
 </script>
 {% endblock %}

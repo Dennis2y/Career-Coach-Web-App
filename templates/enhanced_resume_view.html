@@ -5,6 +5,18 @@
 {% block content %}
 <div class="min-h-screen bg-gray-900 text-white">
 
+  <!-- Model Selection Section (added) -->
+  <div class="max-w-7xl mx-auto py-8 px-6">
+    <form method="POST" action="{{ url_for('upload_resume') }}" enctype="multipart/form-data" class="flex items-center gap-4">
+      <label for="model" class="text-lg font-semibold text-white">Choose AI Model:</label>
+      <select name="model" id="model" class="rounded-md px-3 py-2 bg-gray-800 text-white border border-gray-600 hover:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500" required>
+        <option value="gpt-4.1-mini" {% if selected_model == 'gpt-4.1-mini' %}selected{% endif %}>GPT-4.1 Mini</option>
+        <option value="gpt-4o-mini" {% if selected_model == 'gpt-4o-mini' or not selected_model %}selected{% endif %}>GPT-4.0 Mini</option>
+      </select>
+      <!-- You can add other inputs here or a hidden submit, depending on your flow -->
+    </form>
+  </div>
+
   <!-- Professional Header Section -->
   <div class="bg-gradient-to-r from-green-800 via-green-700 to-blue-800 py-20 px-6">
     <div class="max-w-7xl mx-auto text-center">
@@ -167,7 +179,7 @@
     </div>
   </div>
 
-  <!-- Extra PDF Download Buttons (optional grid) -->
+  <!-- Extra PDF Download Buttons -->
   <div class="template-options grid grid-cols-1 md:grid-cols-3 gap-8 my-8">
     <button onclick="downloadTemplate('professional', 'color')" class="btn-template">Download Professional PDF</button>
     <button onclick="downloadTemplate('modern', 'color')" class="btn-template">Download Modern PDF</button>
@@ -181,7 +193,7 @@
       <p class="text-xl text-gray-300 max-w-3xl mx-auto">Choose how your profile photo appears in your selected resume template</p>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
-      <!-- ... (Your photo integration options go here, unchanged) ... -->
+      <!-- Photo integration options (add your content here) -->
       <input type="file" id="newPhoto" accept="image/*" class="hidden">
     </div>
   </div>
@@ -208,7 +220,7 @@
       <p class="text-xl text-gray-400 max-w-3xl mx-auto">Professional standards applied to optimize your resume for global opportunities</p>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-      <!-- You can add feature cards here if desired -->
+      <!-- Add feature cards here if desired -->
     </div>
   </div>
 
@@ -309,10 +321,8 @@ function typeMessage() {
 
 // Typewriter effect for the enhanced resume content, paragraph by paragraph
 function typeParagraphs(text, targetId, speed = 30, paragraphDelay = 400) {
-  // Split into paragraphs (by double newlines or single newlines)
   let paragraphs = text.split(/\n\s*\n/);
   if (paragraphs.length === 1) {
-    // fallback: split by single newline if no double newlines
     paragraphs = text.split('\n');
   }
   const target = document.getElementById(targetId);
@@ -384,18 +394,17 @@ function downloadTemplate(templateType, colorOption) {
     name: "{{ current_user.name }}",
     email: "{{ current_user.email }}"
   };
- fetch('/download-template-pdf', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    template: templateType,
-    colorOption: colorOption,
-    content: resumeContent,
-    isMarkdown: true,
-    userInfo: userInfo
+  fetch("{{ url_for('download_template_pdf') }}", {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      template: templateType,
+      colorOption: colorOption,
+      content: resumeContent,
+      isMarkdown: true,
+      userInfo: userInfo
+    })
   })
-})
-
   .then(response => {
     if (!response.ok) throw new Error('Network response was not ok');
     return response.blob();

@@ -69,3 +69,12 @@ class CoverLetter(db.Model):
     job_info = db.Column(db.Text)
     content = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.now)
+
+
+
+class Conversation(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    role = db.Column(db.String(10))
+    content = db.Column(db.Text)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)

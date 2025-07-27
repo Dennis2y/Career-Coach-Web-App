@@ -12,7 +12,6 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
 
   <style>
-    /* Add custom styling for the eye icon */
     .eye-icon {
       position: absolute;
       right: 15px;
@@ -22,7 +21,7 @@
     }
   </style>
 </head>
-<body class="bg-gray-900 text-white">
+<body class="bg-gray-900 text-white min-h-screen flex flex-col">
 
   <!-- Navigation Bar -->
   <nav class="flex items-center justify-between px-8 py-4 bg-gray-800 shadow-md">
@@ -30,21 +29,37 @@
       <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="w-10 h-10">
       <h1 class="text-2xl font-bold text-orange-500">CAREER COACH</h1>
     </div>
-    <div class="space-x-6 font-semibold text-white">
-      <a href="/" class="hover:text-orange-400">Home</a>
-      <a href="/upload" class="hover:text-orange-400">Upload Resume</a>
-      <a href="/career-advice" class="hover:text-orange-400">Career Advice</a>
-      <a href="/resumes" class="hover:text-orange-400">My Resumes</a>
+    <div class="space-x-6 font-semibold text-white flex items-center">
+      <a href="{{ url_for('home') }}" class="hover:text-orange-400">Home</a>
+      <a href="{{ url_for('upload_resume') }}" class="hover:text-orange-400">Upload Resume</a>
+      <a href="{{ url_for('career_advice') }}" class="hover:text-orange-400">Career Advice</a>
+      <a href="{{ url_for('resume_list') }}" class="hover:text-orange-400">My Resumes</a>
       {% if current_user.is_authenticated %}
-        <a href="/logout" class="hover:text-orange-400">Logout</a>
+        <span class="text-gray-300 ml-2">Hi, {{ current_user.name or current_user.email }}!</span>
+        <a href="{{ url_for('logout') }}" class="hover:text-orange-400 ml-2">Logout</a>
       {% else %}
-        <a href="/register" class="hover:text-orange-400">Register</a>
-        <a href="/login" class="hover:text-orange-400">Login</a>
+        <a href="{{ url_for('register') }}" class="hover:text-orange-400">Register</a>
+        <a href="{{ url_for('login') }}" class="hover:text-orange-400">Login</a>
       {% endif %}
     </div>
   </nav>
 
-  <main class="px-6 py-10 max-w-5xl mx-auto">
+  <!-- Main Content -->
+  <main class="px-6 py-10 max-w-5xl mx-auto flex-1 w-full">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="mb-6">
+          {% for category, message in messages %}
+            <div class="rounded-lg px-4 py-3 mb-2
+                        {% if category == 'success' %}bg-green-700 text-green-100
+                        {% elif category == 'error' %}bg-red-700 text-red-100
+                        {% else %}bg-gray-700 text-white{% endif %}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
     {% block content %}{% endblock %}
   </main>
 
@@ -56,19 +71,19 @@
           <div>
             <h4 class="font-semibold text-lg mb-3">Links</h4>
             <ul>
-              <li><a href="/contact" class="hover:text-orange-500">Contact Us</a></li>
-              <li><a href="/legal" class="hover:text-orange-500">Legal</a></li>
-              <li><a href="/privacy" class="hover:text-orange-500">Privacy Policy</a></li>
-              <li><a href="/newsletter" class="hover:text-orange-500">Newsletter</a></li>
+              <li><a href="{{ url_for('contact') }}" class="hover:text-orange-500">Contact Us</a></li>
+              <li><a href="{{ url_for('legal') }}" class="hover:text-orange-500">Legal</a></li>
+              <li><a href="{{ url_for('privacy') }}" class="hover:text-orange-500">Privacy Policy</a></li>
+              <li><a href="{{ url_for('newsletter') }}" class="hover:text-orange-500">Newsletter</a></li>
             </ul>
           </div>
           <div>
             <h4 class="font-semibold text-lg mb-3">Our Services</h4>
             <ul>
-              <li><a href="/resume-review" class="hover:text-orange-500">Resume Review</a></li>
-              <li><a href="/interview-prep" class="hover:text-orange-500">Interview Preparation</a></li>
-              <li><a href="/job-search" class="hover:text-orange-500">Job Search Guidance</a></li>
-              <li><a href="/career-planning" class="hover:text-orange-500">Career Planning</a></li>
+              <li><a href="{{ url_for('resume_review') }}" class="hover:text-orange-500">Resume Review</a></li>
+              <li><a href="{{ url_for('interview_prep') }}" class="hover:text-orange-500">Interview Preparation</a></li>
+              <li><a href="{{ url_for('job_search') }}" class="hover:text-orange-500">Job Search Guidance</a></li>
+              <li><a href="{{ url_for('career_planning') }}" class="hover:text-orange-500">Career Planning</a></li>
             </ul>
           </div>
           <div>

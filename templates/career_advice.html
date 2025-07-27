@@ -3,59 +3,80 @@
 {% block title %}Career Advice - Career Coach{% endblock %}
 
 {% block content %}
-  <div class="max-w-4xl mx-auto py-10 pb-40 content-area flex flex-col min极h-[80vh]">
-    <h2 class="text-3xl font-bold text-center text-orange-400 mb-6">AI Career Advice</h2>
-    <p class="text-center text-gray-400 mb-8 text-lg">Ask a career-related question below, and get AI-powered suggestions!</p>
+<div class="max-w-4xl mx-auto py-10 pb-40 content-area flex flex-col min-h-[80vh]">
+  <h2 class="text-3xl font-bold text-center text-orange-400 mb-6">AI Career Advice</h2>
+  <p class="text-center text-gray-400 mb-8 text-lg">Ask a career-related question below, and get AI-powered suggestions!</p>
 
-    {% if advice %}
-      <div id="advice-output" class="bg-gray-800 p-8 rounded-lg shadow-lg text-white mb-8 w-full max-w-4xl mx-auto leading-relaxed text-[22px] font-medium" style="font-family: 'Inter', Arial, sans-serif;">
-        <p class="mb-4 text-xl"><strong>Your Question:</strong> {{ request.form['question'] }}</p>
-        <h3 class="font-semibold text-orange-300 mb-4 text-2xl">AI Career Advice:</h3>
-        <div id="ai-typing" style="white-space: pre-line;"></div>
-      </div>
-      <script>
-        document.addEventListener("DOMContentLoaded", function () {
-          const advice = {{ advice|tojson }};
-          const target = document.getElementById("ai-typing");
-          let idx = 0;
-          const baseDelay = 20;
-          const initialDelay = 300;
-          function typeWriter() {
-            if (idx < advice.length) {
-              target.innerHTML = advice.substring(0, idx) + '<span id="cursor" class="animate-pulse text-orange-300">|</span>';
-              idx++;
-              let delay = baseDelay;
-              if (advice.charAt(idx-1) === '\n') delay = 40;
-              else if (/[,.!?;:]/.test(advice.charAt(idx-1))) delay = 30;
-              setTimeout(typeWriter, delay);
-            } else {
-              const cursor = document.getElementById("cursor");
-              if (cursor) cursor.remove();
+  {% if advice %}
+    <div id="advice-output" class="bg-gray-800 p-8 rounded-lg shadow-lg text-white mb-8 w-full max-w-4xl mx-auto leading-relaxed text-[22px] font-medium" style="font-family: 'Inter', Arial, sans-serif;">
+      <p class="mb-4 text-xl"><strong>Your Question:</strong> {{ question }}</p>
+      <h3 class="font-semibold text-orange-300 mb-4 text-2xl">AI Career Advice:</h3>
+      <div id="ai-typing" style="white-space: pre-line;">{{ advice }}</div>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const advice = {{ advice|tojson }};
+        const target = document.getElementById("ai-typing");
+        const original = target.innerText;
+        target.innerHTML = '';
+        let idx = 0;
+        const baseDelay = 20;
+        const initialDelay = 300;
+        let animationSkipped = false;
+
+        function typeWriter() {
+          if (animationSkipped) return;
+          if (idx < advice.length) {
+            const char = advice.charAt(idx);
+            target.innerHTML = advice.substring(0, idx) + '<span id="cursor" class="animate-pulse text-orange-300">|</span>';
+            idx++;
+            let delay = baseDelay;
+            if (char === '\n') delay = 40;
+            else if (/[.?!,;:]/.test(char)) delay = 30;
+            setTimeout(typeWriter, delay);
+          } else {
+            const cursor = document.getElementById("cursor");
+            if (cursor) cursor.remove();
+            const lastChar = target.innerText.trim().slice(-1);
+            if (!/[.?!]/.test(lastChar)) {
+              target.innerText += '.';
             }
           }
-          setTimeout(typeWriter, initialDelay);
-        });
-      </script>
-    {% endif %}
-  </div>
+        }
 
-  <!-- Fixed bottom input area -->
-  <div class="fixed bottom-0 left-0 right-0 z-50 bg-[#212121] border-t border-[#333333] py-4">
-    <div class="max-w-4xl mx-auto px-4 w-full">
-      <form method="POST" action="/career-advice" enctype="multipart/form-data"
-            class="relative w-full bg-[#2f2f2f] rounded-3xl border border-[#424242] shadow-lg">
-        <div class="flex items-end p-2 gap-2 w-full">
+        setTimeout(typeWriter, initialDelay);
+      });
+    </script>
+  {% endif %}
+</div>
 
-          <!-- Attach Files Button -->
+<div class="fixed bottom-0 left-0 right-0 z-50 bg-[#212121] border-t border-[#333333] py-4">
+  <div class="max-w-4xl mx-auto px-4 w-full">
+    <form method="POST" action="/career-advice" enctype="multipart/form-data"
+          class="relative w-full bg-[#2f2f2f] rounded-3xl border border-[#424242] shadow-lg">
+      <div class="flex items-center gap-4 py-2 px-4 border-b border-[#424242]">
+        <label for="model" class="text-white font-semibold">AI Model:</label>
+        <select name="model" id="model" class="rounded-md px-2 py-1 bg-[#1b1b1b] text-white border border-[#555] focus:outline-none focus:ring-2 focus:ring-orange-400" required>
+          <option value="gpt-4.1-mini" {% if selected_model == 'gpt-4.1-mini' %}selected{% endif %}>GPT-4.1 Mini</option>
+          <option value="gpt-4o-mini" {% if selected_model == 'gpt-4o-mini' or not selected_model %}selected{% endif %}>GPT-4.0 Mini</option>
+        </select>
+      </div>
+
+      <div class="flex flex-col gap-2 p-2 w-full">
+        <!-- File Preview Bubble (like ChatGPT) -->
+        <div id="file-preview" class="flex items-center flex-wrap gap-2 px-2 pb-1"></div>
+
+        <div class="flex items-end gap-2 w-full">
+          <!-- File Attachment -->
           <label for="attachment" class="flex-shrink-0 p-2 hover:bg-[#404040] rounded-xl cursor-pointer transition-colors" title="Attach files">
             <svg class="w-7 h-7 text-[#a6a6a6]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
             </svg>
-            <input type="file" name="attachment" id="attachment" class="hidden"
-                   accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.zip">
+            <input type="file" name="attachment" id="attachment" class="hidden" accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.zip">
           </label>
 
-          <!-- Big, wide, tall textarea -->
+          <!-- Textarea -->
           <textarea
             name="question"
             id="question"
@@ -68,12 +89,12 @@
             aria-label="Ask your question"
             maxlength="4000"
             style="box-sizing: border-box;"
-          ></textarea>
+          >{{ question }}</textarea>
 
-          <!-- Voice Input Button -->
+          <!-- Voice input -->
           <button type="button" onclick="startVoiceInput(event)"
                   class="flex-shrink-0 p-2 hover:bg-[#404040] rounded-xl transition-colors" title="Voice input" aria-label="Voice input">
-            <svg class="w-7 h-7 text-[极a6a6a6]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-7 h-7 text-[#a6a6a6]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
             </svg>
@@ -87,61 +108,91 @@
               <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
             </svg>
           </button>
-
         </div>
-      </form>
+      </div>
+    </form>
 
-      <p class="text-center text-xs text-[#a6a6a6] mt-2">
-        Career Coach can make mistakes. Check important info.
-      </p>
-    </div>
+    <p class="text-center text-xs text-[#a6a6a6] mt-2">
+      Career Coach can make mistakes. Check important info.
+    </p>
   </div>
+</div>
 
-  <!-- JavaScript for send button and voice input -->
-  <script>
-    function checkInput(element) {
-      const sendBtn = document.getElementById('send-btn');
-      sendBtn.disabled = !element.value.trim();
-    }
-    function handleKeyPress(event) {
-      if (event.key === 'Enter' && !event.shiftKey) {
-        event.preventDefault();
-        const form = event.target.closest('form');
-        const sendBtn = document.getElementById('send-btn');
-        if (!sendBtn.disabled) {
-          form.submit();
-        }
-      }
-    }
-    function startVoiceInput(event) {
+<script>
+  function checkInput(element) {
+    const sendBtn = document.getElementById('send-btn');
+    sendBtn.disabled = !element.value.trim();
+  }
+
+  function handleKeyPress(event) {
+    if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
-      const textarea = document.getElementById('question');
-      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-        alert('Voice input not supported in this browser.');
-        return;
+      const form = event.target.closest('form');
+      const sendBtn = document.getElementById('send-btn');
+      if (!sendBtn.disabled) {
+        form.submit();
       }
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const recognition = new SpeechRecognition();
-      recognition.lang = 'en-US';
-      recognition.interimResults = false;
-      recognition.maxAlternatives = 1;
-      recognition.onresult = function(event) {
-        const transcript = event.results[0][0].transcript;
-        textarea.value += (textarea.value ? ' ' : '') + transcript;
-        checkInput(textarea);
-        textarea.focus();
-      };
-      recognition.onerror = function(event) {
-        console.error('Speech recognition error:', event.error);
-      };
-      recognition.start();
     }
-    document.addEventListener("DOMContentLoaded", function() {
-      const textarea = document.getElementById('question');
-      if (textarea) {
-        checkInput(textarea);
-        textarea.focus();
+  }
+
+  function startVoiceInput(event) {
+    event.preventDefault();
+    const textarea = document.getElementById('question');
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      alert('Voice input not supported in this browser.');
+      return;
+    }
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onresult = function(event) {
+      const transcript = event.results[0][0].transcript;
+      textarea.value += (textarea.value ? ' ' : '') + transcript;
+      checkInput(textarea);
+      textarea.focus();
+    };
+
+    recognition.onerror = function(event) {
+      console.error('Speech recognition error:', event.error);
+    };
+
+    recognition.start();
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const textarea = document.getElementById('question');
+    if (textarea) {
+      checkInput(textarea);
+      textarea.focus();
+    }
+
+    const fileInput = document.getElementById('attachment');
+    const filePreview = document.getElementById('file-preview');
+
+    fileInput.addEventListener('change', function () {
+      filePreview.innerHTML = '';
+      if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const fileBubble = document.createElement('div');
+        fileBubble.className = 'flex items-center bg-[#404040] text-white px-3 py-1 rounded-full text-sm max-w-full overflow-hidden';
+
+        fileBubble.innerHTML = `
+          <span class="truncate max-w-[200px]">${file.name}</span>
+          <button type="button" onclick="removeAttachment()" class="ml-2 text-white hover:text-red-400 font-bold text-lg leading-none">&times;</button>
+        `;
+        filePreview.appendChild(fileBubble);
       }
     });
-  </script>
+  });
+
+  function removeAttachment() {
+    const fileInput = document.getElementById('attachment');
+    const filePreview = document.getElementById('file-preview');
+    fileInput.value = '';
+    filePreview.innerHTML = '';
+  }
+</script>
 {% endblock %}

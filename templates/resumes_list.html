@@ -1,43 +1,108 @@
-{% extends 'base.html' %}
-
-{% block title %}My Resumes - Career Coach{% endblock %}
+{% extends "base.html" %}
+{% block title %}My Resumes{% endblock %}
 
 {% block content %}
-<div class="flex flex-col min-h-screen bg-gray-900 text-white">
-  <div class="flex-grow flex flex-col justify-center items-center">
-    <div class="w-full max-w-2xl flex flex-col items-center justify-center">
-      <h1 class="text-3xl font-bold text-orange-400 mb-6 text-center">My Resumes</h1>
+<div class="max-w-5xl mx-auto px-6 py-10 text-white">
 
-      {% if resumes %}
-        <ul class="space-y-4 w-full">
-          {% for resume in resumes %}
-            <li class="bg-gray-800 rounded-lg p-5 shadow hover:bg-gray-700 transition">
-              <div class="flex justify-between items-center">
-                <div>
-                  <h2 class="text-xl font-semibold text-white">{{ resume.original_name }}</h2>
-                  <p class="text-sm text-gray-400">{{ resume.type.capitalize() }} | {{ resume.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
-                </div>
-                <a href="{{ url_for('view_resume_endpoint', id=resume.id) }}" class="text-blue-400 hover:text-blue-300 font-bold">View →</a>
-              </div>
-            </li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <div class="bg-gray-800 p-6 rounded-lg shadow-lg text-center">
-          <p class="text-gray-400 text-xl mb-6">No resumes found.</p>
-          <div class="flex w-full items-center space-x-4">
-            <div class="flex space-x-4">
-              <a href="/upload" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg font-semibold transition">Upload Resume</a>
-              <a href="/resume/new" class="bg-orange-400 hover:bg-orange-500 text-white py-2 px-4 rounded-lg font-semibold transition">Generate Resume</a>
-            </div>
-            <div class="flex-grow"></div>
-            <a href="/" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-6 rounded-lg font-semibold transition">
-              Back to Homepage
-            </a>
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-3xl font-bold">My Resumes</h1>
+    <a href="{{ url_for('upload_resume') }}"
+       class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+      Upload / Generate
+    </a>
+  </div>
+
+  {% if resumes %}
+  <!-- Bulk delete form -->
+  <form id="bulkDeleteForm" method="POST" action="{{ url_for('bulk_delete_resumes') }}"
+        onsubmit="return confirm('Delete the selected resume(s)? This cannot be undone.');">
+
+    <div class="flex items-center justify-between mb-4">
+      <label class="inline-flex items-center gap-2">
+        <input id="selectAll" type="checkbox" class="h-4 w-4 rounded border-gray-500">
+        <span class="text-sm">Select all</span>
+      </label>
+
+      <button id="deleteSelectedBtn" type="submit"
+              class="bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed
+                     text-white px-4 py-2 rounded"
+              disabled>
+        Delete selected
+      </button>
+    </div>
+
+    <div class="divide-y divide-gray-700 rounded-lg border border-gray-700">
+      {% for r in resumes %}
+      <div class="flex items-center gap-4 p-4">
+        <!-- selection -->
+        <input type="checkbox" name="resume_ids" value="{{ r.id }}"
+               class="resume-checkbox h-4 w-4 rounded border-gray-500">
+
+        <!-- details -->
+        <div class="flex-1">
+          <div class="font-semibold">
+            {{ r.original_name or ("Resume #" ~ r.id) }}
+          </div>
+          <div class="text-sm text-gray-400">
+            {{ (r.type or '')|capitalize }}
+            • {{ (r.created_at or r.timestamp)|default("", true) }}
+            {% if r.template_name %} • Template: {{ r.template_name }}{% endif %}
           </div>
         </div>
-      {% endif %}
+
+        <!-- actions (no nested forms). Use `formaction` to call single delete. -->
+        <div class="flex items-center gap-2">
+          <a href="{{ url_for('view_resume_endpoint', id=r.id) }}"
+             class="px-3 py-1 rounded bg-gray-700 hover:bg-gray-600">View</a>
+
+          <button type="submit"
+                  formmethod="post"
+                  formaction="{{ url_for('delete_resume_endpoint', id=r.id) }}"
+                  class="px-3 py-1 rounded bg-red-600 hover:bg-red-700"
+                  onclick="return confirm('Delete this resume?');">
+            Delete
+          </button>
+        </div>
+      </div>
+      {% endfor %}
     </div>
-  </div>
+  </form>
+
+  {% else %}
+    <div class="bg-gray-800 p-6 rounded-lg shadow-lg text-center">
+      <p class="text-gray-300 text-lg mb-6">No resumes found.</p>
+      <div class="flex items-center justify-center gap-4">
+        <a href="{{ url_for('upload_resume') }}"
+           class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Upload Resume</a>
+        <a href="{{ url_for('upload_resume') }}"
+           class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded">Generate Resume</a>
+      </div>
+    </div>
+  {% endif %}
 </div>
+
+<script>
+  const selectAll = document.getElementById('selectAll');
+  const deleteBtn  = document.getElementById('deleteSelectedBtn');
+  const checkboxes = () => Array.from(document.querySelectorAll('.resume-checkbox'));
+
+  function refreshDeleteState() {
+    deleteBtn.disabled = !checkboxes().some(cb => cb.checked);
+  }
+
+  selectAll?.addEventListener('change', () => {
+    checkboxes().forEach(cb => cb.checked = selectAll.checked);
+    refreshDeleteState();
+  });
+
+  document.addEventListener('change', (e) => {
+    if (e.target.classList?.contains('resume-checkbox')) {
+      const all = checkboxes();
+      selectAll.checked = all.length && all.every(c => c.checked);
+      refreshDeleteState();
+    }
+  });
+
+  refreshDeleteState();
+</script>
 {% endblock %}

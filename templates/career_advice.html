@@ -9,11 +9,15 @@
 
   {% if advice %}
     <div id="advice-output" class="bg-gray-800 p-8 rounded-lg shadow-lg text-white mb-8 w-full max-w-4xl mx-auto leading-relaxed text-[22px] font-medium" style="font-family: 'Inter', Arial, sans-serif;">
-      <p class="mb-4 text-xl"><strong>Your Question:</strong> {{ question }}</p>
+       <p class="mb-4 text-xl"><strong>Your Question:</strong> {{ last_question }}</p>
       <h3 class="font-semibold text-orange-300 mb-4 text-2xl">AI Career Advice:</h3>
       <div id="ai-typing" style="white-space: pre-line;">{{ advice }}</div>
+      {% if image_url %}
+        <div class="my-4">
+          <img src="{{ image_url }}" alt="AI Generated Image" class="rounded-xl shadow-lg">
+        </div>
+      {% endif %}
     </div>
-
     <script>
       document.addEventListener("DOMContentLoaded", function () {
         const advice = {{ advice|tojson }};
@@ -59,9 +63,18 @@
         <label for="model" class="text-white font-semibold">AI Model:</label>
         <select name="model" id="model" class="rounded-md px-2 py-1 bg-[#1b1b1b] text-white border border-[#555] focus:outline-none focus:ring-2 focus:ring-orange-400" required>
           <option value="gpt-4.1-mini" {% if selected_model == 'gpt-4.1-mini' %}selected{% endif %}>GPT-4.1 Mini</option>
-          <option value="gpt-4o-mini" {% if selected_model == 'gpt-4o-mini' or not selected_model %}selected{% endif %}>GPT-4.0 Mini</option>
+          <option value="gpt-4o-mini" {% if selected_model == 'gpt-4o-mini' or not selected_model %}selected{% endif %}>GPT-4o Mini</option>
+          <option value="gemini-2.5-flash" {% if selected_model == 'gemini-2.5-flash' %}selected{% endif %}>gemini-2.5 flash</option>
+
         </select>
       </div>
+        {% if token_usage %}
+  <div class="token-usage" style="margin-top:12px;font-size:0.9rem;opacity:.8;">
+    Tokens — in: {{ token_usage.input_tokens or 0 }},
+    out: {{ token_usage.output_tokens or 0 }},
+    total: {{ token_usage.total_tokens or ((token_usage.input_tokens or 0) + (token_usage.output_tokens or 0)) }}
+  </div>
+{% endif %}
 
       <div class="flex flex-col gap-2 p-2 w-full">
         <!-- File Preview Bubble (like ChatGPT) -->

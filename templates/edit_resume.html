@@ -1,38 +1,104 @@
-<!-- templates/edit_resume.html -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Edit Resume</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
-</head>
-<body>
-    <h1>Edit Resume</h1>
+{% extends "base.html" %}
+{% block title %}Edit Resume{% endblock %}
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <ul class="flashes">
-          {% for category, message in messages %}
-            <li class="{{ category }}">{{ message }}</li>
-          {% endfor %}
-        </ul>
-      {% endif %}
-    {% endwith %}
+{% block content %}
+<div class="max-w-6xl mx-auto px-6 py-10 text-white">
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-3xl font-bold">Edit Resume</h1>
+    <a href="{{ url_for('view_enhanced_resume', id=resume.id) }}"
+       class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded">Back</a>
+  </div>
 
-    <form method="POST" action="{{ url_for('edit_resume', id=resume.id) }}">
-        <div>
-            <label for="text_content">Resume Content:</label><br />
-            <textarea id="text_content" name="text_content" rows="20" cols="80" required>{{ resume.text_content }}</textarea>
-        </div>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="space-y-2 mb-4">
+        {% for category, msg in messages %}
+          <div class="px-4 py-2 rounded
+                      {% if category == 'success' %}bg-green-700{% elif category == 'error' %}bg-red-700{% else %}bg-gray-700{% endif %}">
+            {{ msg }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
 
-        <div>
-            <label for="template_name">Template Name (optional):</label><br />
-            <input type="text" id="template_name" name="template_name" value="{{ resume.template_name or '' }}" />
-        </div>
+  <form method="POST" action="{{ url_for('edit_resume', id=resume.id) }}" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Editor -->
+    <div>
+      <label for="text_content" class="block mb-2 text-sm text-gray-300">Resume Content (Markdown or plain text)</label>
+      <textarea id="text_content" name="text_content" rows="22"
+                class="w-full rounded bg-gray-900 border border-gray-700 p-3 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                oninput="schedulePreview()">{{ resume.text_content|e }}</textarea>
 
-        <button type="submit">Save Changes</button>
-        <a href="{{ url_for('view_resume_endpoint', id=resume.id) }}">Cancel</a>
-    </form>
-</body>
-</html>
+      <div class="mt-4">
+        <label for="template_name" class="block mb-2 text-sm text-gray-300">Template</label>
+        <select id="template_name" name="template_name"
+                class="rounded bg-gray-900 border border-gray-700 p-2">
+          {% set tpl = resume.template_name or '' %}
+          <option value="" {% if not tpl %}selected{% endif %}>(no change)</option>
+          <option value="professional" {% if tpl == 'professional' %}selected{% endif %}>Professional</option>
+          <option value="modern" {% if tpl == 'modern' %}selected{% endif %}>Modern</option>
+          <option value="creative" {% if tpl == 'creative' %}selected{% endif %}>Creative</option>
+          <option value="professional-blue" {% if tpl == 'professional-blue' %}selected{% endif %}>Professional (Blue)</option>
+          <option value="modern-green" {% if tpl == 'modern-green' %}selected{% endif %}>Modern (Green)</option>
+          <option value="creative-purple" {% if tpl == 'creative-purple' %}selected{% endif %}>Creative (Purple)</option>
+        </select>
+      </div>
+
+      <div class="mt-6 flex gap-3">
+        <button type="submit"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded">
+          Save changes
+        </button>
+        <a href="{{ url_for('view_enhanced_resume', id=resume.id) }}"
+           class="bg-gray-700 hover:bg-gray-600 px-5 py-2 rounded">Cancel</a>
+      </div>
+    </div>
+
+    <!-- Live Preview -->
+    <div>
+      <div class="flex items-center justify-between mb-2">
+        <h2 class="text-xl font-semibold">Live Preview</h2>
+        <span class="text-xs text-gray-400">Links are clickable (blue & underlined)</span>
+      </div>
+      <div id="preview" class="bg-white text-gray-900 rounded border border-gray-300 p-4 h-[700px] overflow-auto">
+        <!-- JS sets content -->
+      </div>
+    </div>
+  </form>
+</div>
+
+<script>
+  let previewTimer;
+  function schedulePreview() {
+    clearTimeout(previewTimer);
+    previewTimer = setTimeout(updatePreview, 250);
+  }
+
+  async function updatePreview() {
+    const md = document.getElementById('text_content').value || '';
+    try {
+      const res = await fetch("{{ url_for('wrap_preview') }}", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ markdown: md })
+      });
+      const html = await res.text();
+      // enforce blue, underlined links in preview
+      const wrapped = `
+        <style>
+          body { font-family: Arial, sans-serif; line-height:1.55; }
+          a, a:link, a:visited { color:#2563eb; text-decoration: underline; }
+        </style>
+        ${html}
+      `;
+      document.getElementById('preview').innerHTML = wrapped;
+    } catch (e) {
+      document.getElementById('preview').innerHTML =
+        '<div class="text-red-600">Preview failed.</div>';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', updatePreview);
+</script>
+{% endblock %}

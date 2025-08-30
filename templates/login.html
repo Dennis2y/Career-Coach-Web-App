@@ -5,7 +5,6 @@
   <title>Login - Career Coach</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* Add some custom styling for the eye icon */
     .eye-icon {
       position: absolute;
       right: 15px;
@@ -18,6 +17,19 @@
 <body class="bg-gray-900 text-white">
   <div class="max-w-3xl mx-auto py-10 px-6">
     <h1 class="text-4xl font-bold text-orange-400 mb-6">Login</h1>
+
+    <!-- Flash messages block -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="mb-4">
+          {% for category, message in messages %}
+            <div class="px-4 py-3 rounded-lg shadow bg-green-600 text-white mb-2">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
 
     <form method="POST" action="/login" class="bg-gray-800 p-8 rounded-xl shadow space-y-6">
       <!-- Email -->
@@ -47,12 +59,9 @@
   </div>
 
   <script>
-    // Toggle the visibility of the password field
     const togglePassword = document.getElementById("toggle-password");
     const passwordField = document.getElementById("password");
-
     togglePassword.addEventListener("click", function () {
-      // Toggle the password type between text and password
       if (passwordField.type === "password") {
         passwordField.type = "text";
         togglePassword.textContent = "🙈";

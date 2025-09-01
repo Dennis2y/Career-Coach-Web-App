@@ -1,9 +1,3 @@
-<<<<<<< HEAD
-
-=======
-
->>>>>>> e731768...
-
 # Career Coach Web App
 
 **AI-powered Career Coach Web Application for resume feedback, cover letter generation, and career advice.**
@@ -29,7 +23,6 @@
 =======
 Career Coach Web App
 AI-powered Career Coach Web Application for resume feedback, cover letter generation, and career advice.
->>>>>>> e731768 (Final cleanup: README, app.py, style.css)
 
 Table of Contents
 Description
@@ -49,7 +42,7 @@ Screenshots
 🔹 Homepage
 Homepage
 
-<<<<<<< HEAD
+
 ## Screenshots
 
 ### 🔹 Homepage
@@ -87,7 +80,7 @@ Features
 
 🔹 AI Cover Letter Generator
 Cover Letter
->>>>>>> e731768 (Final cleanup: README, app.py, style.css)
+
 
 🔹 Resume Upload Page
 Upload Resume
@@ -95,7 +88,6 @@ Upload Resume
 🔹 Resume Dashboard
 My Resumes
 
-<<<<<<< HEAD
 1. **Clone the repository**  
 ```bash
 =======
@@ -248,49 +240,3 @@ Make sure the images are renamed as follows and located in `static/assets/`:
 | `career_advice.png` | AI Career Advice |
 
 
-<<<<<<< HEAD
-
-=======
-About
-No description, website, or topics provided.
-Resources
- Readme
- Activity
-Stars
- 0 stars
-Watchers
- 0 watching
-Forks
- 0 forks
-Releases
-No releases published
-Create a new release
-Packages
-No packages published
-Publish your first package
-Languages
-HTML
-58.9%
- 
-Python
-37.1%
- 
-CSS
-3.7%
- 
-Mako
-0.3%
-Suggested workflows
-Based on your tech stack
-SLSA Generic generator logo
-SLSA Generic generator
-Generate SLSA3 provenance for your existing release workflows
-Python Package using Anaconda logo
-Python Package using Anaconda
-Create and test a Python package on multiple Python versions using Anaconda for package management.
-Jekyll using Docker image logo
-Jekyll using Docker image
-Package a Jekyll site using the jekyll/builder Docker image.
-More workflows
-Footer
->>>>>>> e731768 (Final cleanup: README, app.py, style.css)

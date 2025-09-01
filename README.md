@@ -99,7 +99,7 @@ My Resumes
 
 1. **Clone the repository**  
 ```bash
-=======
+
 🔹 AI Career Advice
 Career Advice
 
@@ -111,16 +111,18 @@ Features
 ✅ User authentication and dashboard
 ✅ Resume upload and management
 ✅ Career advice and interview tips
+
+
 Installation
 Clone the repository
->>>>>>> e731768 (Final cleanup: README, app.py, style.css)
+
 git clone https://github.com/Dennis2y/Career-Coach-Web-App.git
 cd Career-Coach-Web-App
 
 Create and activate a virtual environment
 
 python -m venv venv
-source venv/bin/activate   # or venv\Scripts\activate on Windows
+source venv/bin/activate   
 
 
 Install dependencies
@@ -132,6 +134,7 @@ Set up environment variables
 Create a .env file in the root directory and add:
 
 OPENAI_API_KEY=your-api-key-here
+GOOGLE_API_KEY=
 FLASK_ENV=development
 SECRET_KEY=your-secret-key
 
@@ -210,7 +213,7 @@ Flask-Login
 SQLAlchemy
 
 OpenAI API
-
+gemini 2.5 flash
 Tailwind CSS
 
 Jinja2 Templates

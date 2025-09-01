@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> 623851d (Fix image filenames and update README screenshots)
 # Career Coach Web App
 
 **AI-powered Career Coach Web Application for resume feedback, cover letter generation, and career advice.**
@@ -20,9 +25,13 @@
 ---
 
 ## Description
-=======
+
 Career Coach Web App
 AI-powered Career Coach Web Application for resume feedback, cover letter generation, and career advice.
+<<<<<<< HEAD
+=======
+
+>>>>>>> 623851d (Fix image filenames and update README screenshots)
 
 Table of Contents
 Description

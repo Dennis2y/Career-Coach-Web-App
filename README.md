@@ -63,6 +63,7 @@ Homepage
 ### 🔹 AI Career Advice
 ![Career Advice](static/assets/career_advice.png)
 
+
 ---
 
 ## Features

@@ -1,3 +1,9 @@
+<<<<<<< HEAD
+
+=======
+
+>>>>>>> e731768...
+
 # Career Coach Web App
 
 **AI-powered Career Coach Web Application for resume feedback, cover letter generation, and career advice.**
@@ -20,11 +26,30 @@
 ---
 
 ## Description
+=======
+Career Coach Web App
+AI-powered Career Coach Web Application for resume feedback, cover letter generation, and career advice.
+>>>>>>> e731768 (Final cleanup: README, app.py, style.css)
 
+Table of Contents
+Description
+Screenshots
+Features
+Installation
+Usage
+Project Structure
+Technologies
+Contributing
+License
+Contact
+Description
 Career Coach is a modern web application that leverages AI to help users improve their resumes, generate professional cover letters, and receive personalized career advice. It supports resume uploads, AI-driven enhancements, and provides a user-friendly interface for managing career documents.
 
----
+Screenshots
+🔹 Homepage
+Homepage
 
+<<<<<<< HEAD
 ## Screenshots
 
 ### 🔹 Homepage
@@ -56,13 +81,38 @@ Career Coach is a modern web application that leverages AI to help users improve
 - ✅ **User authentication and dashboard**
 - ✅ **Resume upload and management**
 - ✅ **Career advice and interview tips**
+=======
+🔹 Feature Highlights
+Features
 
----
+🔹 AI Cover Letter Generator
+Cover Letter
+>>>>>>> e731768 (Final cleanup: README, app.py, style.css)
 
-## Installation
+🔹 Resume Upload Page
+Upload Resume
 
+🔹 Resume Dashboard
+My Resumes
+
+<<<<<<< HEAD
 1. **Clone the repository**  
 ```bash
+=======
+🔹 AI Career Advice
+Career Advice
+
+Features
+✅ AI-powered resume analysis and enhancement
+✅ Professional cover letter generation with AI
+✅ Multiple resume templates with photo integration
+✅ Live typing animation for AI-generated content
+✅ User authentication and dashboard
+✅ Resume upload and management
+✅ Career advice and interview tips
+Installation
+Clone the repository
+>>>>>>> e731768 (Final cleanup: README, app.py, style.css)
 git clone https://github.com/Dennis2y/Career-Coach-Web-App.git
 cd Career-Coach-Web-App
 
@@ -198,4 +248,49 @@ Make sure the images are renamed as follows and located in `static/assets/`:
 | `career_advice.png` | AI Career Advice |
 
 
+<<<<<<< HEAD
 
+=======
+About
+No description, website, or topics provided.
+Resources
+ Readme
+ Activity
+Stars
+ 0 stars
+Watchers
+ 0 watching
+Forks
+ 0 forks
+Releases
+No releases published
+Create a new release
+Packages
+No packages published
+Publish your first package
+Languages
+HTML
+58.9%
+ 
+Python
+37.1%
+ 
+CSS
+3.7%
+ 
+Mako
+0.3%
+Suggested workflows
+Based on your tech stack
+SLSA Generic generator logo
+SLSA Generic generator
+Generate SLSA3 provenance for your existing release workflows
+Python Package using Anaconda logo
+Python Package using Anaconda
+Create and test a Python package on multiple Python versions using Anaconda for package management.
+Jekyll using Docker image logo
+Jekyll using Docker image
+Package a Jekyll site using the jekyll/builder Docker image.
+More workflows
+Footer
+>>>>>>> e731768 (Final cleanup: README, app.py, style.css)

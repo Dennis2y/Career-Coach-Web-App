@@ -7,6 +7,7 @@
 ## Table of Contents
 
 - [Description](#description)
+- [Screenshots](#screenshots)
 - [Features](#features)
 - [Installation](#installation)
 - [Usage](#usage)
@@ -24,100 +25,177 @@ Career Coach is a modern web application that leverages AI to help users improve
 
 ---
 
+## Screenshots
+
+### 🔹 Homepage
+![Homepage](static/assets/home.png)
+
+### 🔹 Feature Highlights
+![Features](static/assets/features.png)
+
+### 🔹 AI Cover Letter Generator
+![Cover Letter](static/assets/cover_letter.png)
+
+### 🔹 Resume Upload Page
+![Upload Resume](static/assets/upload_resume.png)
+
+### 🔹 Resume Dashboard
+![My Resumes](static/assets/my_resumes.png)
+
+### 🔹 AI Career Advice
+![Career Advice](static/assets/career_advice.png)
+
+---
+
 ## Features
 
-- **AI-powered resume analysis and enhancement**
-- **Professional cover letter generation with AI**
-- **Multiple resume templates with photo integration**
-- **Live typing animation for AI-generated content**
-- **User authentication and dashboard**
-- **Resume upload and management**
-- **Career advice and interview tips**
+- ✅ **AI-powered resume analysis and enhancement**
+- ✅ **Professional cover letter generation with AI**
+- ✅ **Multiple resume templates with photo integration**
+- ✅ **Live typing animation for AI-generated content**
+- ✅ **User authentication and dashboard**
+- ✅ **Resume upload and management**
+- ✅ **Career advice and interview tips**
 
 ---
 
 ## Installation
 
-1. **Clone the repository: https://github.com/Dennis2y/Career-Coach-Web-App.git
+1. **Clone the repository**  
+```bash
+git clone https://github.com/Dennis2y/Career-Coach-Web-App.git
+cd Career-Coach-Web-App
+
+Create and activate a virtual environment
+
+python -m venv venv
+source venv/bin/activate   # or venv\Scripts\activate on Windows
 
 
-2. **Create and activate a virtual environment:**
+Install dependencies
+
+pip install -r requirements.txt
 
 
-3. **Install dependencies:**
+Set up environment variables
+Create a .env file in the root directory and add:
+
+OPENAI_API_KEY=your-api-key-here
+FLASK_ENV=development
+SECRET_KEY=your-secret-key
 
 
+Run database migrations
 
-4. **Set up environment variables:**
-- Create a `.env` file in the project root.
-- Add your OpenAI API key and other configurations.
-
-5. **Run database migrations:**
+flask db upgrade
 
 
-6. **Start the Flask development server:**
+Start the Flask development server
+
+flask run --port=5002
 
 
+Open your browser
+Visit http://localhost:5002
 
-7. **Open your browser and navigate to `http://localhost:5001`.**
+Usage
 
----
+Register or log in to your account
 
-## Usage
+Upload your resume for AI enhancement
 
-- **Register or log in to your account.**
-- **Upload your resume for AI enhancement.**
-- **Generate cover letters tailored to job descriptions.**
-- **Choose from multiple resume templates.**
-- **Access career advice and interview tips.**
+Generate cover letters tailored to job descriptions
 
----
+Choose from multiple resume templates
 
-## Project Structure
+Access career advice and interview tips
 
+Project Structure
 Career-Coach-Web-App
-
-├── migrations
+├── migrations/
 ├── static/
-│ └── images/
-│ ├── robot.png
-│ └── logo.png
+│   ├── assets/
+│   │   ├── home.png
+│   │   ├── features.png
+│   │   ├── cover_letter.png
+│   │   ├── upload_resume.png
+│   │   ├── my_resumes.png
+│   │   └── career_advice.png
+│   └── images/
+│       ├── robot.png
+│       └── logo.png
 ├── templates/
-│ ├── 404.html
-│ ├── 429.html
-│ ├── admin_dashboard.html
-│ ├── base.html
-│ ├── career_advice.html
-│ ├── cover_letter.html
-│ ├── dashboard.html
-│ ├── enhanced_resume_view.html
-│ ├── home.html
-│ ├── interview_tips.html
-│ ├── login.html
-│ ├── register.html
-│ ├── resume_view.html
-│ ├── resumes_list.html
-│ ├── upload.html
-│ └── uploads/ # Uploaded files
-├── .env 
-├── render.yaml 
-├── app.py 
-├── models.py 
-├── requirements.txt 
-└── README.md 
+│   ├── 404.html
+│   ├── 429.html
+│   ├── admin_dashboard.html
+│   ├── base.html
+│   ├── career_advice.html
+│   ├── cover_letter.html
+│   ├── dashboard.html
+│   ├── enhanced_resume_view.html
+│   ├── home.html
+│   ├── interview_tips.html
+│   ├── login.html
+│   ├── register.html
+│   ├── resume_view.html
+│   ├── resumes_list.html
+│   └── upload.html
+├── uploads/  
+├── .env
+├── render.yaml
+├── app.py
+├── models.py
+├── requirements.txt
+└── README.md
+
+Technologies
+
+Python 3.10+
+
+Flask
+
+Flask-Login
+
+SQLAlchemy
+
+OpenAI API
+
+Tailwind CSS
+
+Jinja2 Templates
+
+WeasyPrint (for PDF resume generation)
+
+Contributing
+
+Contributions are welcome!
+Please fork the repository, make your changes, and submit a pull request.
+
+License
+
+This project is licensed under the MIT License.
+
+Contact
+
+Dennis Charles
+📧 Email: [charles.dennis71@yahoo.com]
+🌐 GitHub: https://github.com/Dennis2y
 
 
-## Technologies
+---
 
-- **Python 3.10+**
-- **Flask**
-- **Flask-Login**
-- **SQLAlchemy**
-- **OpenAI API**
-- **Tailwind CSS**
+### ✅ Next Step
+
+Make sure the images are renamed as follows and located in `static/assets/`:
+
+| Filename | Matches Section |
+|----------|------------------|
+| `home.png` | Homepage |
+| `features.png` | Feature Highlights |
+| `cover_letter.png` | AI Cover Letter Generator |
+| `upload_resume.png` | Resume Upload Page |
+| `my_resumes.png` | Resume Dashboard |
+| `career_advice.png` | AI Career Advice |
 
 
-## Contributing
-
-Contributions are welcome! Please fork the repository and submit a pull request.
 
